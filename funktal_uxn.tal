@@ -53,6 +53,24 @@ BRK
     ,&String JCN
     JMP2r
 
+    .c STZ ( take char from the stack and put it in c )
+    .state LDZ CharConst EQU 
+    .c LDZ #27 EQU ( " has an ASCII code value of 34 )
+    AND
+    ,&EndChar JCN
+
+    .state LDZ CharConst EQU
+    .c LDZ #27 NEQ
+    AND
+    ,&Char JCN
+    JMP2r
+
+    .state LDZ Comment EQU
+    .c LDZ #27 EQU
+    AND
+    ,&Base JCN
+    JMP2r
+
     &EndString
         EndStringConst .nextState STZ
     JMP2r
@@ -61,6 +79,16 @@ BRK
         StringConst .nextState STZ
     JMP2r
 
+    &EndChar
+        EndCharConst .nextState STZ
+    JMP2r
+
+    &Char
+        CharConst .nextState STZ
+    JMP2r
+
+    &Base
+        Base .nextState STZ
 
 
 
