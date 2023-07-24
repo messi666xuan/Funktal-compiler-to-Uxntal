@@ -45,12 +45,12 @@ BRK
     .state LDZ StringConst EQU 
     .c LDZ #22 EQU ( " has an ASCII code value of 34 )
     AND
-    ,&EndString JSR
+    ,&EndString JCN
 
     .state LDZ StringConst EQU
     .c LDZ #22 NEQ
     AND
-    ,&String JSR
+    ,&String JCN
     JMP2r
 
     &EndString
