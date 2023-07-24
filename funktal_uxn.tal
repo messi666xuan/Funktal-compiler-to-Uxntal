@@ -1,0 +1,34 @@
+|0000
+%StringConst { #13 }
+%EndStringConst { #14 }
+
+@nextState $1
+|0100
+
+@stateJudge
+    ;state LDA StringConst EQU
+    ;c LDA #34 EQU
+    EQU
+    ,&EndString JCN
+
+    ;state LDA StringConst EQU
+    ;c LDA #34 NEQ
+    EQU
+    ,&String JCN
+
+    BRK
+
+    &EndString
+        EndStringConst .nextState STA
+    BRK
+    
+
+    &String
+        StringConst .nextState STA
+    BRK
+BRK
+
+
+
+
+
