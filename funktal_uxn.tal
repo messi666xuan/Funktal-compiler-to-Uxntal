@@ -1,32 +1,66 @@
 |0000
+%Base { #00 }
+%Identifier { #05 }
+%TypeIdentifier { #06 }
+%Constant { #07 }
+%TypeSeparator { #08 }
+%Assignment { #09 }
+%Operator { #0a }
+%ParenOpen { #0b }
+%ParenClose { #0c }
+%BindOpen { #0d }
+%BindClose { #0e }
+%AltSeparator { #0f }
+%NumConst { #10 }
+%CharConst { #11 }
+%EndCharConst { #12 }
 %StringConst { #13 }
 %EndStringConst { #14 }
+%Separator { #15 }
+%TypeDeclarator { #16 }
+%BlockOpen { #17 }
+%BlockClose { #18 }
+%TypeParenOpen { #19 }
+%TypeParenClose { #1a }
+%BracketOpen { #1b }
+%BracketClose { #1c }
+%Operator2 { #1d }
+%Error { #1e }
+%Skip { #1f }
+%Comment { #20 }
+%ExprSeparator { #21 }
+%Comma { #22 }
+%Quote { #23 }
+%LeftPointy { #24 }
 
+@state $1 @c $1
 @nextState $1
+
 |0100
+( this is the main program. Here is where you call the function )
+BRK
 
-@stateJudge
-    ;state LDA StringConst EQU
-    ;c LDA #34 EQU
-    EQU
-    ,&EndString JCN
+@updateState
+    .c STZ ( take char from the stack and put it in c )
+    .state LDZ StringConst EQU 
+    .c LDZ #22 EQU ( " has an ASCII code value of 34 )
+    AND
+    ,&EndString JSR
 
-    ;state LDA StringConst EQU
-    ;c LDA #34 NEQ
-    EQU
-    ,&String JCN
-
-    BRK
+    .state LDZ StringConst EQU
+    .c LDZ #22 NEQ
+    AND
+    ,&String JSR
+    JMP2r
 
     &EndString
-        EndStringConst .nextState STA
-    BRK
-    
+        EndStringConst .nextState STZ
+    JMP2r
 
     &String
-        StringConst .nextState STA
-    BRK
-BRK
+        StringConst .nextState STZ
+    JMP2r
+
 
 
 
