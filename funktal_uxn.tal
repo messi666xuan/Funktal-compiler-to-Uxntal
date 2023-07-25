@@ -22,8 +22,9 @@
 %BlockClose { #18 }
 %TypeParenOpen { #19 }
 %TypeParenClose { #1a }
-%BracketOpen { #1b }
-%BracketClose { #1c }
+%BracketOpen { #1a }
+%BracketClose { #1b }
+%Minus { #1c }
 %Operator2 { #1d }
 %Error { #1e }
 %Skip { #1f }
@@ -66,9 +67,17 @@ BRK
     JMP2r
 
     .state LDZ Comment EQU
-    .c LDZ #27 EQU
+    .c LDZ #0a EQU
     AND
     ,&Base JCN
+    JMP2r
+
+    .state LDZ StringConst NEQ
+    .state LDZ CharConst NEQ
+    AND
+    .state LDZ Comment NEQ
+    AND
+    ,&second_jump JCN ( state /= StringConst .and. state /= CharConst .and. state /= Comment )
     JMP2r
 
     &EndString
@@ -89,7 +98,237 @@ BRK
 
     &Base
         Base .nextState STZ
+    JMP2r
 
+    &second_jump
+        .c LDZ #22 EQU ( " has an ASCII code value of 34 )
+        ,&String JCN
+        JMP2r
+        .c LDZ #27 EQU
+        ,&Char JCN
+        JMP2r
+
+        .state LDZ Minus EQU
+        .c LDZ LIT "- EQU
+        AND
+        ,&Comment JCN
+        JMP2r
+
+        .state LDZ Comment EQU
+        .c LDZ #0a EQU
+        AND
+        ,&Base JCN
+        JMP2r
+
+        .c LDZ LIT "{ EQU 
+        ,&BlockOpen JCN
+        JMP2r
+        .c LDZ LIT "} EQU 
+        ,&BlockClose JCN
+        JMP2r
+
+        .c LDZ LIT "( EQU 
+        ,&ParenOpen JCN
+        JMP2r
+        .c LDZ LIT ") EQU 
+        ,&ParenClose JCN
+        JMP2r
+
+        .c LDZ LIT "[ EQU 
+        ,&BracketOpen JCN
+        JMP2r
+        .c LDZ LIT "] EQU 
+        ,&BracketClose JCN
+        JMP2r
+
+        .c LDZ LIT "\ EQU 
+        ,&BindOpen JCN
+        JMP2r
+
+        .c LDZ LIT "= EQU 
+        ,&Operator2_Assignment JCN
+        JMP2r
+
+        .c LDZ LIT "` EQU 
+        ,&Quote JCN
+        JMP2r
+
+        .c LDZ LIT ", EQU 
+        ,&Comma JCN
+        JMP2r
+
+        .c LDZ LIT ": EQU 
+        ,&TypeDeclarator JCN
+        JMP2r
+
+        .c LDZ LIT "| EQU 
+        ,&AltSeparator JCN
+        JMP2r
+
+        .state LDZ NumConst NEQ
+        .c LDZ LIT ". EQU
+        AND
+        ,&BindClose JCN
+        JMP2r
+
+        .state LDZ NumConst EQU
+        .c LDZ LIT "_ EQU
+        AND
+        ,&NumConst JCN
+        JMP2r
+
+        ( TypeIdentifier NumConst not completed )
+
+        .state LDZ LeftPointy EQU
+        .c LDZ LIT "- EQU
+        AND
+        ,&TypeSeparator JCN
+        JMP2r
+
+        .state LDZ Minus NEQ
+        .c LDZ LIT "- EQU
+        AND
+        ,&Minus JCN
+        JMP2r
+
+        .c LDZ LIT "  EQU
+        .c LDZ #09 EQU
+        ORA
+        .state LDZ Minus EQU
+        AND
+        ,&Operator2 JCN
+        JMP2r
+
+        .state LDZ Operator NEQ
+        .state LDZ Operator2 NEQ
+        AND
+        .state LDZ LeftPointy NEQ
+        .c LDZ LIT "< EQU
+        AND AND
+        ,&LeftPointy JCN
+        JMP2r
+
+        ( elseif(if-else Operator TypeSeparator Operator2 not completed) )
+
+        .state LDZ Operator2 EQU
+        ,&Base JCN
+        JMP2r
+
+        .state LDZ Operator2 EQU
+        ,&Base JCN
+        JMP2r
+
+        ( Last3: Base ExprSeparator Separator not completed )
+
+
+    
+    &Comment
+        Comment .nextState STZ
+    JMP2r
+
+    &BlockOpen
+        BlockOpen .nextState STZ
+    JMP2r
+
+    &BlockClose
+        BlockClose .nextState STZ
+    JMP2r
+
+    &ParenOpen
+        ParenOpen .nextState STZ
+    JMP2r
+
+    &ParenClose
+        ParenClose .nextState STZ
+    JMP2r
+
+    &BracketOpen
+        BracketOpen .nextState STZ
+    JMP2r
+
+    &BracketClose
+        BracketClose .nextState STZ
+    JMP2r
+
+    &BindOpen
+        BindOpen .nextState STZ
+    JMP2r
+
+    &Operator2_Assignment
+        .state LDZ Operator EQU
+        .state LDZ LeftPointy EQU
+        ORA
+        .state LDZ Assignment EQU
+        ORA
+        ,&Operator2 JCN
+        ,&Assignment JMP
+    JMP2r
+
+    &Operator2
+        Operator2 .nextState STZ
+    JMP2r
+
+    &Assignment
+        Assignment .nextState STZ
+    JMP2r
+
+    &Quote
+        Quote .nextState STZ
+    JMP2r
+
+    &Comma
+        Comma .nextState STZ
+    JMP2r
+
+    &Separator
+        Separator .nextState STZ
+    JMP2r
+
+    &TypeDeclarator
+        TypeDeclarator .nextState STZ
+    JMP2r
+
+    &AltSeparator
+        AltSeparator .nextState STZ
+    JMP2r
+
+    &BindClose
+        BindClose .nextState STZ
+    JMP2r
+
+    &NumConst
+        NumConst .nextState STZ
+    JMP2r
+
+    &Identifier
+        Identifier .nextState STZ
+    JMP2r
+
+    &Minus
+        Minus .nextState STZ
+    JMP2r
+
+    &LeftPointy
+        LeftPointy .nextState STZ
+    JMP2r
+
+    &Operator
+        Operator .nextState STZ
+    JMP2r
+
+    &TypeSeparator
+        TypeSeparator .nextState STZ
+    JMP2r
+
+    &ExprSeparator
+        ExprSeparator .nextState STZ
+    JMP2r
+
+    
+
+
+
+    
 
 
 
