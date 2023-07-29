@@ -41,6 +41,54 @@
 ( this is the main program. Here is where you call the function )
 BRK
 
+
+@isTypeIdentifierStartChar
+    .c LDZ #40 GTH
+    .c LDZ #5b LTH
+    AND
+JMP2r
+
+@isIdentifierStartChar
+    .c LDZ #60 GTH
+    .c LDZ #7b LTH
+    AND
+    .c LDZ #5f EQU
+    ORA
+JMP2r
+
+@isDigit
+    .c LDZ #2f GTH
+    .c LDZ #3a LTH
+    AND
+JMP2r
+
+@isOperator
+    .c LDZ #29 GTH
+    .c LDZ #30 LTH
+    AND
+    .c LDZ #21 EQU
+    .c LDZ #25 EQU
+    ORA ORA         ( (ic >= 42 .and. ic <= 47) .or. ic == 33 .or. ic == 37 )
+    .c LDZ #26 EQU
+    .c LDZ #3c EQU
+    ORA
+    .c LDZ #3d EQU
+    .c LDZ #3e EQU
+    ORA ORA         ( ic == 38 .or. ic == 60 .or. ic == 61 .or. ic == 62 )
+    .c LDZ #5e EQU
+    .c LDZ #7c EQU
+    ORA
+    .c LDZ #7e EQU
+    ORA ( ic == 94 .or. ic == 124 .or. ic == 126 )
+    ORA ORA
+JMP2r
+
+@isExprSeparator
+    .c LDZ #0a EQU
+    .c LDZ LIT "; EQU
+    ORA
+JMP2r
+
 @updateState
     .c STZ ( take char from the stack and put it in c )
     .state LDZ StringConst EQU 
@@ -78,6 +126,8 @@ BRK
     .state LDZ Comment NEQ
     AND
     ,&second_jump JCN ( state /= StringConst .and. state /= CharConst .and. state /= Comment )
+
+    ,&nextState_state JMP ( else nextState = state )
     JMP2r
 
     &EndString
@@ -153,6 +203,23 @@ BRK
         ,&Quote JCN
         JMP2r
 
+         
+        ,&isIdentifierState JSR2
+        ,&isEndConstState JSR2
+        ORA
+        .state LDZ BlockOpen EQU
+        .state LDZ BracketOpen EQU
+        ORA
+        .state LDZ ParenOpen EQU
+        ORA ORA
+        .c LDZ LIT "  EQU
+        .c LDZ #09 EQU
+        ORA
+        AND
+        ,&Separator JCN
+        JMP2r
+
+
         .c LDZ LIT ", EQU 
         ,&Comma JCN
         JMP2r
@@ -177,7 +244,34 @@ BRK
         ,&NumConst JCN
         JMP2r
 
-        ( TypeIdentifier NumConst not completed )
+        ,&isIdentifierState JSR2
+        EOR
+        ;isIdentifierStartChar JSR2
+        AND
+        ,&Identifier JCN
+        JMP2r 
+
+        ,&isIdentifierState JSR2
+        EOR
+        ;isTypeIdentifierStartChar JSR2
+        AND
+        ,&TypeIdentifier JCN
+        JMP2r
+
+        ,&isIdentifierState JSR2
+        EOR
+        ,&isStringConstState JSR2
+        ORA
+        ,&TypeIdentifier JCN
+        JMP2r
+
+        ,&isIdentifierState JSR2
+        ,&isStringConstState JSR2
+        ORA EOR
+        ,&isdigit JSR2
+        AND
+        ,&NumConst JCN
+        JMP2r
 
         .state LDZ LeftPointy EQU
         .c LDZ LIT "- EQU
@@ -208,17 +302,55 @@ BRK
         ,&LeftPointy JCN
         JMP2r
 
-        ( elseif(if-else Operator TypeSeparator Operator2 not completed) )
+        .state LDZ Operator NEQ
+        .state LDZ Operator2 NEQ
+        AND
+        .state LDZ LeftPointy NEQ
+        ;isOperator JSR2
+        AND AND
+        ,&Operator JCN
+        JMP2r
+
+        .state LDZ Operator EQU
+        .state LDZ LeftPointy EQU
+        ORA
+        .state LDZ Assignment EQU
+        ORA
+        ;isOperator JSR2
+        AND
+        ,&TypeSeparator_Operator2 JCN
+        JMP2r
+
 
         .state LDZ Operator2 EQU
         ,&Base JCN
         JMP2r
 
-        .state LDZ Operator2 EQU
+        .state LDZ Operator EQU
+        .state LDZ LeftPointy EQU
+        ORA
+        ;isOperator JSR2
+        EOR AND
         ,&Base JCN
         JMP2r
 
-        ( Last3: Base ExprSeparator Separator not completed )
+        .state LDZ ExprSeparator NEQ
+        ;isExprSeparator JSR2
+        AND
+        ,&ExprSeparator JCN
+        JMP2r
+
+        .c LDZ LIT "  EQU
+        .c LDZ #09 EQU
+        ORA
+        ;isExprSeparator JSR2
+        ORA
+        .state LDZ ExprSeparator EQU
+        AND
+        ,&Separator JCN
+        ,&nextState_state JMP ( else nextState = state )
+        JMP2r
+
 
 
     
@@ -262,6 +394,39 @@ BRK
         ORA
         ,&Operator2 JCN
         ,&Assignment JMP
+    JMP2r
+
+    &TypeSeparator_Operator2
+        .state LDZ LeftPointy EQU
+        .c LDZ LIT "- EQU
+        AND
+        ,&TypeSeparator JCN
+        ,&Operator2 JMP
+    JMP2r
+
+    &isIdentifierState
+        .state LDZ Identifier EQU
+        .state LDZ TypeIdentifier EQU
+        ORA
+    JMP2r
+
+    &isEndConstState
+        .state LDZ EndCharConst EQU
+        .state LDZ EndStringConst EQU
+        ORA
+        .state LDZ NumConst EQU
+        ORA
+    JMP2r
+
+    &isStringConstState
+        .state LDZ CharConst EQU
+        .state LDZ CharConst EQU
+        ORA
+        
+    JMP2r
+
+    &nextState_state
+        .state LDZ .nextState STZ
     JMP2r
 
     &Operator2
@@ -323,6 +488,14 @@ BRK
     &ExprSeparator
         ExprSeparator .nextState STZ
     JMP2r
+
+    &TypeIdentifier
+        TypeIdentifier .nextState STZ
+    JMP2r
+
+
+JMP2r
+
 
     
 
