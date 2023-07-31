@@ -1,4 +1,5 @@
 |0000
+( state constants )
 %Base { #00 }
 %Identifier { #05 }
 %TypeIdentifier { #06 }
@@ -34,8 +35,22 @@
 %Quote { #23 }
 %LeftPointy { #24 }
 
+( context )
+%None { #00 }
+%Libraries { #0 }
+%Uxntal { #02 }
+%Aliases { #03 }
+%Types { #04 }
+%Constants { #05 }
+%ProgramState { #06 }
+%Devices { #07 }
+%Functions { #08 }
+%Main { #09 }
+
 @state $1 @c $1
 @nextState $1
+@context $1 @prevContext $1
+@funktalIdentifier $16
 
 |0100
 ( this is the main program. Here is where you call the function )
@@ -88,6 +103,93 @@ JMP2r
     .c LDZ LIT "; EQU
     ORA
 JMP2r
+
+@updateContext
+    .context LDZ None EQU
+    ,&context_None JCN
+JMP2r  
+
+    &context_None
+        .state LDZ BlockOpen EQU
+        ,&state_BlockOpen JCN
+
+        .state LDZ BlockClose EQU
+        ,&state_BlockClose JCN
+    JMP2r
+
+    &state_BlockOpen
+        .funktalIdentifier #00 LDZ ADD LDZ
+        LIT "l EQU
+        ,&Libraries JCN
+        .funktalIdentifier #00 LDZ ADD LDZ
+        LIT "u EQU
+        ,&Uxntal JCN
+        .funktalIdentifier #00 LDZ ADD LDZ
+        LIT "t EQU
+        ,&Types JCN
+        .funktalIdentifier #00 LDZ ADD LDZ
+        LIT "a EQU
+        ,&Aliases JCN
+        .funktalIdentifier #00 LDZ ADD LDZ
+        LIT "c EQU
+        ,&Constants JCN
+        .funktalIdentifier #00 LDZ ADD LDZ
+        LIT "s EQU
+        ,&ProgramState JCN
+        .funktalIdentifier #00 LDZ ADD LDZ
+        LIT "d EQU
+        ,&Devices JCN
+        .funktalIdentifier #00 LDZ ADD LDZ
+        LIT "f EQU
+        ,&Functions JCN
+        .funktalIdentifier #00 LDZ ADD LDZ
+        LIT "m EQU
+        ,&Main JCN
+
+        .context LDZ .prevContext STZ
+        ( funktalIdentifier = achar(0) )
+    JMP2r
+    
+    &state_BlockClose
+        None .context STZ
+
+    &Libraries
+        Libraries .context STZ
+    JMP2r
+
+    &Uxntal
+        Uxntal .context STZ
+    JMP2r
+
+    &Types
+        Types .context STZ
+    JMP2r
+
+    &Aliases
+        Aliases .context STZ
+    JMP2r
+
+    &Constants
+        Constants .context STZ
+    JMP2r
+
+    &ProgramState
+        ProgramState .context STZ
+    JMP2r
+
+    &Devices
+        Devices .context STZ
+    JMP2r
+
+    &Functions
+        Functions .context STZ
+    JMP2r
+
+    &Main
+        Main .context STZ
+    JMP2r
+
+
 
 @updateState
     .c STZ ( take char from the stack and put it in c )
@@ -493,8 +595,9 @@ JMP2r
         TypeIdentifier .nextState STZ
     JMP2r
 
-
 JMP2r
+
+
 
 
     
