@@ -1,4 +1,4 @@
-|0000
+|10 @Console &vector $2 &read $1 &pad $5 &write $1 &error $1
 ( state constants )
 %Base { #00 }
 %Identifier { #05 }
@@ -47,10 +47,26 @@
 %Functions { #08 }
 %Main { #09 }
 
+|0000
 @state $1 @c $1
 @nextState $1
 @context $1 @prevContext $1
-@funktalIdentifier $16
+@idId $1 @stringConstIdx $1 @numConstIdx $1 @charIdx $1
+@constId $1 @taggedConstId $1 @numConstId $1 @inBlock $1
+@strLen $2 @funktalIdentifier $10 @hasMain $1
+@funktalTypesEnd $1 @funktalAliasesEnd $1 @funktalConstantsEnd $1 @funktalStateEnd $1
+@funktalDevicesEnd $1 @funktalFunctionsEnd $1 @funktalCodeUnitBegin $1 @funktalCodeUnitEnd $1 @funktalTokensIdx $1
+
+( integer(kind=2) :: funktalTypesEnd = 1_2
+integer(kind=2) :: funktalAliasesEnd = 1_2
+integer(kind=2) :: funktalConstantsEnd = 1_2
+integer(kind=2) :: funktalStateEnd = 1_2
+integer(kind=2) :: funktalDevicesEnd = 1_2
+integer(kind=2) :: funktalFunctionsEnd = 1_2
+integer(kind=2) :: funktalMainStart = 1_2
+integer(kind=2) :: funktalMainEnd = 1_2
+integer(kind=2) :: funktalCodeUnitBegin = 0_2
+integer(kind=2) :: funktalCodeUnitEnd = 0_2 )
 
 |0100
 ( this is the main program. Here is where you call the function )
@@ -103,6 +119,11 @@ JMP2r
     .c LDZ LIT "; EQU
     ORA
 JMP2r
+
+@numConstant $8 @stringConstant $80 
+
+@tokeniseFunktal
+
 
 @updateContext
     .context LDZ None EQU
