@@ -63,16 +63,19 @@
 %StateVarLabel { #0e }
 %DeviceLabel { #0f }
 
+( Const labels ( 2 bits ) )
+%CString { #01 }
+
 |0000
 |10 @Console &vector $2 &read $1 &pad $5 &write $1 &error $1
 @state $1 @c $1 @prevc $1
 @nextState $1 @prevState $1
-@context $1 @prevContext $1
+@context $1 @prevContext $1 @funktalToken $2
 @idId $1 @stringConstIdx $1 @numConstIdx $1 @charIdx $1
-@constId $1 @taggedConstId $1 @numConstId $1 @inBlock $1
+@constId $1 @taggedConstId $2 @numConstId $1 @inBlock $1
 @strLen $2 @funktalIdentifier $10 @hasMain $1
 @funktalIdentifierStringsIdx $1  
-
+@index $1 @label $2 @funktalTokensIdx $1
 
 
 |0100
@@ -133,24 +136,75 @@ JMP2r
 
 @numConstant $8 @stringConstant $80 
 @funktalIdentifierStringIdxs $300
+
+@funktalIdentifier_achar0
+    #00 .Index STZ
+    #10 ( counter=16 )
+    #00 .funktalIdentifier STZ ( Set current byte to 0 )
+    &loop
+        #01 SUB  ( Decrement loop counter )
+        .Index LDZ INC .Index STZ
+        #00 .Index LDZ .funktalIdentifier ADD STZ  ( Move to next byte in the array )
+        
+        DUP
+        #00 NEQ ,&loop JCN ( If loop counter is not zero, jump back to &loop )
+
+JMP2r  ( Return to the main program )
+
+@numConstant_achar0
+    #00 .Index STZ
+    #08 ( counter=8 )
+    #00 ;numConstant STA ( Set current byte to 0 )
+    &loop
+        #01 SUB  ( Decrement loop counter )
+        .Index LDZ INC .Index STZ
+        #00 .Index LDZ ;numConstant ADD STA  ( Move to next byte in the array )
+        
+        DUP
+        #00 NEQ ,&loop JCN ( If loop counter is not zero, jump back to &loop )
+
+JMP2r  ( Return to the main program )
+
+@stringConstant_achar0
+    #00 .Index STZ
+    #80 ( counter=128 )
+    #00 ;stringConstant STA ( Set current byte to 0 )
+    &loop
+        #01 SUB  ( Decrement loop counter )
+        .Index LDZ INC .Index STZ
+        #00 .Index LDZ ;stringConstant ADD STA  ( Move to next byte in the array )
+        
+        DUP
+        #00 NEQ ,&loop JCN ( If loop counter is not zero, jump back to &loop )
+
+JMP2r  ( Return to the main program )
+
 @tokeniseFunktal
     .state LDZ .nextState STZ
-    ;updateState JSR
+    ;updateState JSR2
     .state LDZ Comment NEQ
     ;tokeniseFunktal_not_Comment JCN2
 
 @tokeniseFunktal_not_Comment
-    ;updateContext JSR
+    ;updateContext JSR2
+    .context LDZ None EQU
+    ;context_None1 JCN2
     .state LDZ Identifier EQU
     ;tokeniseFunktal_Identifier JCN2
     .state LDZ TypeIdentifier EQU
     ;tokeniseFunktal_TypeIdentifier JCN2
     .state LDZ NumConst EQU
     ;tokeniseFunktal_NumConst JCN2
-
-    
+    .state LDZ StringConst EQU
+    ;tokeniseFunktal_StringConst JCN2
+    .state LDZ EndStringConst EQU
+    ;tokeniseFunktal_EndStringConst JCN2
+    isSeparator
 
 JMP2r
+
+@context_None1
+    #00 .inBlock STZ
 
 @tokeniseFunktal_Identifier ( if (state == Identifier) )
     .prevState LDZ Identifier NEQ
@@ -158,7 +212,7 @@ JMP2r
     ,&prevState_Identifier JMP
 
     &prevState_not_Identifier  ( if (prevState /= Identifier) )
-        ( funktalIdentifier=achar(0) )
+        ;funktalIdentifier_achar0 JSR2 ( funktalIdentifier=achar(0) )
     
         .prevState LDZ NumConst NEQ
         ,&prevState_not_NumConst JCN
@@ -180,56 +234,210 @@ JMP2r
         .c LDZ .funktalIdentifier #01 ADD STZ
         #03 .charIdx STZ
 
-@tokeniseFunktal_TypeIdentifier ( if (state == TypeIdentifier) )
+@tokeniseFunktal_TypeIdentifier         ( if (state == TypeIdentifier) )
     .prevState LDZ TypeIdentifier NEQ
     ,&prevState_not_TypeIdentifier JCN
     ,&prevState_TypeIdentifier JCN
 
     &prevState_not_TypeIdentifier
-        ( funktalIdentifier=achar(0) )
+        ;funktalIdentifier_achar0 JSR2        ( funktalIdentifier=achar(0) )
         .c LDZ .funktalIdentifier STZ
         #02 .charIdx STZ
 
     &prevState_TypeIdentifier
-        .c LDZ .charIdx LDZ .funktalIdentifier ADD STZ ( funktalIdentifier(charIdx) = c )
+        .c LDZ .charIdx LDZ .funktalIdentifier ADD STZ      ( funktalIdentifier(charIdx) = c )
         .charIdx LDZ INC .charIdx STZ
 
-@tokeniseFunktal_NumConst ( if (state == NumConst) )
+@tokeniseFunktal_NumConst          ( if (state == NumConst) )
     .prevState LDZ NumConst NEQ
     ,&prevState_not_NumConst JCN
     ,&prevState_NumConst JMP
 
     &prevState_not_NumConst
-        ( numConstant = achar(0) )
+        ;numConstant_achar0 JSR2   ( numConstant = achar(0) )
         .state LDZ Minus EQU
         ,&prevState_Minus JCN
         ,&prevState_not_Minus JMP
+    JMP2r
 
     &prevState_NumConst
         .c LDZ .constId LDZ ;numConstant ADD STA
         .constId LDZ INC .constId STZ
+    JMP2r
 
     &prevState_Minus
         LIT "- ;numConstant STA
         .c LDZ #01 ;numConstant ADD STA
         #03 .constId STZ
+    JMP2r
 
     &prevState_not_Minus
         .c LDZ ;numConstant STA
         #02 .constId STZ
-    
-@tokeniseFunktal_StringConst ( if (state == StringConst) )
+    JMP2r
+
+@tokeniseFunktal_StringConst          ( if (state == StringConst) )
     .prevState LDZ StringConst NEQ
     ,&prevState_not_StringConst JCN
     ,&prevState_StringConst JMP
 
     &prevState_not_StringConst
-        ( stringConstant = achar(0) )
+        ;stringConstant_achar0 JSR2   ( stringConstant = achar(0) )
         #01 .constId STZ
-    
+    JMP2r
+
     &prevState_StringConst
         .c LDZ .constId LDZ ;stringConstant ADD STA
         .constId LDZ INC .constId STZ
+    JMP2r
+
+@funktalTokens $800
+@tokeniseFunktal_EndStringConst          ( if (state == EndStringConst) )
+    ( call addStringConstIfNew(stringConstant,constId,funktalStringConstsIdx,funktalStringConstId, idId) )
+    CString #40 SFT ( ishft(CString,4) )
+    ConstantLabel ADD .taggedConstId STZ2
+    .taggedConstId LDZ2 .label STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken STZ2
+    .funktalToken LDZ2 .funktalTokensIdx LDZ ;funktalTokens ADD STA2
+    .funktalTokensIdx LDZ INC .funktalTokensIdx STZ
+JMP2r
+
+@token $2
+@makeFunktalToken
+    .label LDZ2 #a0 SFT
+    .idId LDZ2 #03ff AND
+    ADD2 ;token STA2
+JMP2r
+
+@encodeOperatorToken
+    .c LDZ LIT "+ EQU
+
+
+@identifierType $1 @tidentifierStringIdx $2 @tidentifierStringId 2
+@idIdx $1 @j $1 @k $1 @cc $1 @ccc $1 @newStringConst $1 
+@funktalTypeIdentifierStringIdxs $100 @funktalTypeIdentifierStringLengths $100 @funktalTypeIdentifierStrings $800
+@funktalIdentifierStringLengths $300 @funktalIdentifierStrings $800
+@addIdentifierIfNew 
+    #01 ;j STA 
+    #01 ;k STA
+    ;addIdentifierIfNew_loopj JSR2
+    #01 newStringConst STA
+
+@addIdentifierIfNew_loopj
+    #00 newStringConst STA
+    ;identifierType LDA #01 EQU
+    ;identifierType_1j JCN2
+    ;addIdentifierIfNew_loopk JSR2
+    ;j LDA .idId STZ
+    ;addIdentifierIfNew_222 JSR2
+
+    
+JMP2r
+
+
+@identifierType_1j
+    ;funktalTypeIdentifierStringIdxs ;j LDA ADD LDA 
+    ;idIdx STA
+    ;funktalTypeIdentifierStringLengths ;j LDA ADD LDA
+    .charIdx LDZ #01 SUB NEQ
+    ;addIdentifierIfNew_111 JCN2
+    ;funktalIdentifierStringIdxs ;j LDA ADD LDA
+    ;idIdx STA
+    ;funktalIdentifierStringLengths ;j LDA ADD LDA
+    .charIdx LDZ #01 SUB NEQ
+    ;addIdentifierIfNew_111 JCN2
+
+
+
+@addIdentifierIfNew_loopk
+    ;identifierType LDA #01 EQU
+    ;identifierType_1k JCN2
+    ;identifierType_1k_else JSR2
+    ;addIdentifierIfNew_loopk_endif JSR2
+    ;k LDA INC DUP ;k STA
+    .charIdx LDZ #01 SUB NEQ
+    ;addIdentifierIfNew_loopk JCN2
+
+@addIdentifierIfNew_loopk_endif
+    .funktalIdentifier ;k LDA ADD LDZ ;ccc LDA
+    ;cc LDA ;ccc LDA NEQ
+    ;addIdentifierIfNew_111 JCN2
+JMP2r
+
+@identifierType_1k
+    ;idIdx LDA ;k LDA ADD #01 SUB ( idIdx+k-1 )
+    ;funktalTypeIdentifierStrings ADD LDA .cc STA  ( cc =  funktalTypeIdentifierStrings(idIdx+k-1) )
+
+
+@identifierType_1k_else
+    ;idIdx LDA ;k LDA ADD #01 SUB ( idIdx+k-1 )
+    ;funktalIdentifierStrings ADD LDA .cc STA
+
+@addIdentifierIfNew_111
+    ;j LDA INC DUP ;j STA
+    ;tidentifierStringId LDA NEQ
+    ;addIdentifierIfNew_loopj JCN2
+    ;addIdentifierIfNew_loopj JSR2
+
+@addIdentifierIfNew_222
+    ;newIdentifier LDA
+    ;newIdentifier_true JCN2
+JMP2r
+
+@newIdentifier_true 
+    ;tidentifierStringId LDA .idId STZ
+    ;identifierType_if JSR2
+    #01 ;k STA
+    ;addIdentifierIfNew_222_loopk JSR2
+    ;tidentifierStringId LDA INC ;tidentifierStringId STA
+
+    ;identifierType_222_end_judge JSR2
+    ;tidentifierStringId LDA INC ;tidentifierStringId STA
+    .charIdx LDZ #01 SUB
+    ;tidentifierStringIdx LDA ADD ;tidentifierStringIdx STA
+
+JMP2r
+@identifierType_if
+    ;identifierType LDA #01 EQU
+    ;identifierType_222_1 JCN2
+    ;identifierType_222_not_1 JSR2
+JMP2r
+@identifierType_222_1
+    ;tidentifierStringIdx LDA ;funktalTypeIdentifierStringIdxs .idId LDZ ADD LDA
+JMP2r
+
+@identifierType_222_not_1
+    ;tidentifierStringIdx LDA ;funktalIdentifierStringIdxs .idId LDZ ADD LDA
+JMP2r
+
+@addIdentifierIfNew_222_loopk
+    ;identifierType LDA #01 EQU
+    ;identifierType_222_1k JCN2
+    ;identifierType_222_not_1k JSR2
+JMP2r
+@identifierType_222_1k
+    .funktalIdentifier ;k LDA ADD LDZ
+    ;funktalTypeIdentifierStrings ;tidentifierStringIdx LDA ;k LDA ADD #01 SUB ADD2 LDA
+JMP2r
+
+@identifierType_222_not_1k
+    .funktalIdentifier ;k LDA ADD LDZ
+    ;funktalIdentifierStrings ;tidentifierStringIdx LDA ;k LDA ADD #01 SUB ADD2 LDA
+JMP2r
+@identifierType_222_end_judge
+    ;identifierType LDA #01 EQU
+    ;identifierType_222_end_judge_1 JCN2
+    ;identifierType_222_end_judge_not_1 JSR2
+JMP2r
+@identifierType_222_end_judge_1
+    .charIdx LDZ #01 SUB
+    ;funktalTypeIdentifierStringLengths .idId LDA ADD STA
+JMP2r
+@identifierType_222_end_judge_not_1
+    .charIdx LDZ #01 SUB
+    ;funktalIdentifierStringLengths .idId LDA ADD STA
+JMP2r
 
 @updateContext
     .context LDZ None EQU
@@ -274,7 +482,7 @@ JMP2r
         ,&Main JCN
 
         .context LDZ .prevContext STZ
-        ( funktalIdentifier = achar(0) )
+        ;funktalIdentifier_achar0 JSR2 ( funktalIdentifier=achar(0) )
     JMP2r
     
     &state_BlockClose
