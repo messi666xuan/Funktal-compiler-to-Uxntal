@@ -1,3 +1,13 @@
+( date:2023-8-15    
+call clearFunktalTokens() completed
+call initFunktalIdentifierStrings() completed
+call initFunktalFunctionIdentifierStrings() completed
+call initFunktalTypeIdentifierStrings() completed
+FunktalTokeniserFSM completed
+FunktalTokeniser nearly line 185 completed : 
+elseif (state == Operator2 .and. (prevState == Operator .or. prevState == LeftPointy 
+.or. prevState == Assignment .or. prevState == Minus)) 
+)
 ( state constants )
 %Base { #00 }
 %Identifier { #05 }
@@ -47,36 +57,36 @@
 %Main { #09 }
 
 ( token labels )
-%ContextLabel { #01 }
-%IdentifierLabel { #02 }
-%TypeIdentifierLabel { #03 }
-%EmbeddedConstantLabel { #04 }
-%ConstantLabel { #05 }
-%SeparatorLabel { #06 }
-%OperatorLabel { #07 }
-%TypeSynonymLabel { #08 }
-%ArgLabel { #09 }
-%FNameLabel { #0a }
-%PatternLabel { #0b }
-%EndBindLabel { #0c }
-%NamedConstantLabel { #0d }
-%StateVarLabel { #0e }
-%DeviceLabel { #0f }
+%ContextLabel { #0001 }
+%IdentifierLabel { #0002 }
+%TypeIdentifierLabel { #0003 }
+%EmbeddedConstantLabel { #0004 }
+%ConstantLabel { #0005 }
+%SeparatorLabel { #0006 }
+%OperatorLabel { #0007 }
+%TypeSynonymLabel { #0008 }
+%ArgLabel { #0009 }
+%FNameLabel { #000a }
+%PatternLabel { #000b }
+%EndBindLabel { #000c }
+%NamedConstantLabel { #000d }
+%StateVarLabel { #000e }
+%DeviceLabel { #000f }
 
 ( Const labels ( 2 bits ) )
 %CString { #01 }
 
 |0000
 |10 @Console &vector $2 &read $1 &pad $5 &write $1 &error $1
-@state $1 @c $1 @prevc $1
+@state $1 @c $1 @prevc $1 
 @nextState $1 @prevState $1
 @context $1 @prevContext $1 @funktalToken $2 
-@idId $1 @stringConstIdx $1 @numConstIdx $1 @charIdx $1
+@idId $2 @stringConstIdx $1 @numConstIdx $1 @charIdx $1
 @constId $1 @taggedConstId $2 @numConstId $1 @inBlock $1
-@strLen $2 @funktalIdentifier $10 @hasMain $1
+@strLen $1 @funktalIdentifier $10 @hasMain $1
 @funktalIdentifierStringsIdx $1  
 @index $1 @label $2 @funktalTokensIdx $2
-
+@res $1
 
 |0100
 
@@ -125,27 +135,145 @@ JMP2r
     ORA ( ic == 94 .or. ic == 124 .or. ic == 126 )
     ORA ORA
 JMP2r
-
+@isSeparator
+    .state LDZ ParenOpen EQU .state LDZ ParenClose EQU ORA .state LDZ BlockOpen EQU .state LDZ BlockClose EQU ORA ORA
+    .state LDZ BracketOpen EQU .state LDZ BracketClose EQU ORA .state LDZ BindOpen EQU .state LDZ BindClose EQU ORA ORA
+    ORA
+    .state LDZ TypeSeparator EQU .state LDZ Separator EQU ORA .state LDZ TypeDeclarator EQU .state LDZ Assignment EQU ORA ORA
+    .state LDZ AltSeparator EQU .state LDZ ExprSeparator EQU ORA .state LDZ Comma EQU .state LDZ Quote EQU ORA ORA
+    ORA
+    ORA
+    .res STZ
+JMP2r
 @isExprSeparator
     .c LDZ #0a EQU
     .c LDZ LIT "; EQU
     ORA
 JMP2r
 
-@clearFunktalTokens
+@clearFunktalTokens               ( call clearFunktalTokens() )
     #0000 ;funktalTokens STA2
     #0001 .funktalTokensIdx STZ2
 JMP2r
 
-@initFunktalIdentifierStrings
+@charStr $10
+@initFunktalIdentifierStrings    ( call initFunktalIdentifierStrings() )
     ;clearFunktalIdentifiers JSR2
+    #01 ;funktalIdentifierStringIdxs ;funktalIdentifierStringId LDA2 ADD2 STA2 ( funktalIdentifierStringIdxs(funktalIdentifierStringId)=1 )
+    LIT "- ;charStr STA
+    ;addStringToFunktalFunctionIdentifierStrings JSR2
+JMP2r
+
+@funktalIdentifierStrings $800 @funktalIdentifierStringIdxs $300 @funktalIdentifierStringLengths $300
+@funktalIdentifierStringId $2 @funktalIdentifierStringsIdx $2
+
 
 @clearFunktalIdentifiers
-    funktalIdentifierStrings
+    LIT "  ;funktalIdentifierStrings STA 
+    #00 ;funktalIdentifierStringIdxs STA
+    #00 ;funktalIdentifierStringLengths STA
+    #01 ;funktalIdentifierStringId STA
+    #01 ;funktalIdentifierStringsIdx STA
+JMP2r
 
+@funktalFunctionIdentifiers $200 @funktalFunctionIdentifiersIdx $2
+
+@addStringToFunktalFunctionIdentifierStrings
+    ;addStringToFunktalIdentifierStrings JSR2
+    (funktalFunctionIdentifiers(funktalFunctionIdentifiersIdx) = makeFunktalToken(IdentifierLabel, funktalIdentifierStringId-1_2) )
+    IdentifierLabel .label LDZ2 ;funktalIdentifierStringId #0001 SUB2 .idId LDZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2
+    ;funktalFunctionIdentifiers ;funktalFunctionIdentifiersIdx LDA2 ADD2 STA2
+    ;funktalFunctionIdentifiersIdx LDA2 INC2 ;funktalFunctionIdentifiersIdx STA2
+
+JMP2r
+@addStringToFunktalIdentifierStrings
+    ( call str2array(charStr,funktalIdentifierStringsIdx,funktalIdentifierStrings,strLen) )
+    ;funktalIdentifierStringsIdx LDA ;funktalIdentifierStringId LDA ;funktalIdentifierStringIdxs ADD2 STA
+    .strLen LDZ ;funktalIdentifierStringId LDA ;funktalIdentifierStringLengths ADD2 STA
+    ;funktalIdentifierStringId LDA INC ;funktalIdentifierStringId STA
+    .strLen LDZ ;funktalIdentifierStringsIdx LDA ADD2 ;funktalIdentifierStringsIdx STA
+
+JMP2r
+
+@initFunktalFunctionIdentifierStrings                  ( call initFunktalFunctionIdentifierStrings() )
+    ;clearFunktalFunctionIdentifiers JSR2
+    ;addStringToFunktalFunctionIdentifierStrings JSR2
+    ;addStringToFunktalFunctionIdentifierStrings JSR2
+    ;addStringToFunktalFunctionIdentifierStrings JSR2
+    ;addStringToFunktalFunctionIdentifierStrings JSR2
+    ;addStringToFunktalFunctionIdentifierStrings JSR2
+    ;addStringToFunktalFunctionIdentifierStrings JSR2
+    ;addStringToFunktalFunctionIdentifierStrings JSR2
+    ;addStringToFunktalFunctionIdentifierStrings JSR2
+    ;addStringToFunktalFunctionIdentifierStrings JSR2
+    ;addStringToFunktalFunctionIdentifierStrings JSR2
+    ;addStringToFunktalFunctionIdentifierStrings JSR2
+    ;addStringToFunktalFunctionIdentifierStrings JSR2
+    ;addStringToFunktalFunctionIdentifierStrings JSR2
+    ( I don't know how to pass an array as a parameter into a function in uxntal )
+(   call addStringToFunktalFunctionIdentifierStrings("main") ! 1
+    ! Type ctor alt matching
+    call addStringToFunktalFunctionIdentifierStrings("is") ! 2
+    ! Minimal array functions
+    call addStringToFunktalFunctionIdentifierStrings("at") ! 3
+    call addStringToFunktalFunctionIdentifierStrings("update") ! 4
+    call addStringToFunktalFunctionIdentifierStrings("size") ! 5
+    ! Application of quoted functions
+    call addStringToFunktalFunctionIdentifierStrings("apply") ! 6
+    ! if-then-else. This can actually be implemented in Funktal so might go in the Prelude
+    call addStringToFunktalFunctionIdentifierStrings("if") ! 7
+    ! access/update state
+    call addStringToFunktalFunctionIdentifierStrings("get") ! 8
+    call addStringToFunktalFunctionIdentifierStrings("put") ! 9
+    ! device read/write
+    call addStringToFunktalFunctionIdentifierStrings("read") ! 10
+    call addStringToFunktalFunctionIdentifierStrings("write") ! 11
+    ! print, for debugging before we have proper devices
+    call addStringToFunktalFunctionIdentifierStrings("print") ! 12
+    ! this is for event handlers. It's just BRK
+    call addStringToFunktalFunctionIdentifierStrings("done") ! 13 )
+JMP2r
+
+@funktalFunctionIdentifiers $1 @funktalFunctionTypes $1
+@funktalFunctionDefinitionIdxs $1 @funktalFunctionDefinitionLengths $1 
+@funktalFunctionDefinitionsIdx $1 @funktalFunctionIdentifiersIdx $1 @funktalFunctionId $1
+@clearFunktalFunctionIdentifiers
+    #00 ;funktalFunctionIdentifiers STA
+    #00 ;funktalFunctionTypes STA
+    #00 ;funktalFunctionDefinitionIdxs STA
+    #00 ;funktalFunctionDefinitionLengths STA
+    #01 ;funktalFunctionDefinitionsIdx STA
+    #01 ;funktalFunctionIdentifiersIdx STA
+    #01 ;funktalFunctionId STA
+JMP2r
+
+@initFunktalTypeIdentifierStrings
+    ;clearFunktalTypeIdentifiers JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+
+JMP2r
+
+@funktalTypeIdentifierStringIdxs $100 @funktalTypeIdentifierStringLengths $100 @funktalTypeIdentifierStrings $800
+@funktalTypeIdentifierStringId $1 @funktalTypeIdentifierStringsIdx $1
+@clearFunktalTypeIdentifiers
+    LIT "  ;funktalTypeIdentifierStrings STA
+    #00 ;funktalTypeIdentifierStringIdxs STA
+    #00 ;funktalTypeIdentifierStringLengths STA
+    #01 ;funktalTypeIdentifierStringId STA
+    #01 ;funktalTypeIdentifierStringsIdx STA 
+JMP2r
+
+@addStringToFunktalTypeIdentifierStrings
+    ( call str2array(charStr,funktalTypeIdentifierStringsIdx,funktalTypeIdentifierStrings,strLen) )
+    ;funktalTypeIdentifierStringsIdx LDA ;funktalTypeIdentifierStringId LDA ;funktalTypeIdentifierStringIdxs ADD2 STA
+    .strLen LDZ ;funktalTypeIdentifierStringId LDA ;funktalTypeIdentifierStringLengths ADD2 STA
+    ;funktalTypeIdentifierStringId LDA INC ;funktalTypeIdentifierStringId STA
+    .strLen LDZ ;funktalTypeIdentifierStringsIdx LDA ADD2 ;funktalTypeIdentifierStringsIdx STA
 
 @numConstant $8 @stringConstant $80 
-@funktalIdentifierStringIdxs $300
+
 
 @funktalIdentifier_achar0
     #00 .Index STZ
@@ -195,10 +323,39 @@ JMP2r  ( Return to the main program )
     .state LDZ Comment NEQ
     ;tokeniseFunktal_not_Comment JCN2
 
+JMP2r
+
+
 @tokeniseFunktal_not_Comment
     ;updateContext JSR2
     .context LDZ None EQU
     ;context_None1 JCN2
+    .context LDZ Main EQU 
+    .hasMain LDZ #00 EQU 
+    AND
+    ;context_Main JCN2
+    .context LDZ Types NEQ 
+    .state LDZ AltSeparator EQU
+    ;context_Operator JCN2
+
+    
+
+JMP2r
+
+@funktalMainStart $2
+@context_None1
+    #00 .inBlock STZ
+    ;context_End JMP2
+@context_Main
+    #01 .hasMain STZ
+    ;funktalTokensIdx LDZ2 ;funktalMainStart STA2
+    ;context_End JMP2
+
+@context_Operator
+    Operator .state STZ
+    ;context_End JMP2
+
+@context_End
     .state LDZ Identifier EQU
     ;tokeniseFunktal_Identifier JCN2
     .state LDZ TypeIdentifier EQU
@@ -209,12 +366,13 @@ JMP2r  ( Return to the main program )
     ;tokeniseFunktal_StringConst JCN2
     .state LDZ EndStringConst EQU
     ;tokeniseFunktal_EndStringConst JCN2
-    isSeparator
-
-JMP2r
-
-@context_None1
-    #00 .inBlock STZ
+    ;isSeparator JSR2
+    .res LDZ #01 EQU
+    .prevState LDZ Minus EQU AND   ( isSeparator(state) .and. prevState == Minus )
+    ;prevState_Minus JCN2
+    .state LDZ Operator EQU
+    .state LDZ LeftPointy EQU
+    ;tokeniseFunktal_Operator_or_LeftPointy JCN2
 
 @tokeniseFunktal_Identifier ( if (state == Identifier) )
     .prevState LDZ Identifier NEQ
@@ -234,29 +392,36 @@ JMP2r
     &prevState_Identifier
         .c LDZ .charIdx LDZ .funktalIdentifier ADD STZ ( funktalIdentifier(charIdx) = c )
         .charIdx LDZ INC .charIdx STZ
+        ;state_end JMP2
 
     &prevState_not_NumConst  ( if (prevState /= NumConst) )
         .c LDZ .funktalIdentifier STZ
         #02 .charIdx STZ
+        ;state_end JMP2
 
     &prevc0_cx   ( else if(prevc=='0' .and. c =='x') )
         .prevc LDZ .funktalIdentifier STZ
         .c LDZ .funktalIdentifier #01 ADD STZ
         #03 .charIdx STZ
+        ;state_end JMP2
+
+
 
 @tokeniseFunktal_TypeIdentifier         ( if (state == TypeIdentifier) )
     .prevState LDZ TypeIdentifier NEQ
     ,&prevState_not_TypeIdentifier JCN
-    ,&prevState_TypeIdentifier JCN
+    ,&prevState_TypeIdentifier JMP
 
     &prevState_not_TypeIdentifier
         ;funktalIdentifier_achar0 JSR2        ( funktalIdentifier=achar(0) )
         .c LDZ .funktalIdentifier STZ
         #02 .charIdx STZ
+        ;state_end JMP2
 
     &prevState_TypeIdentifier
         .c LDZ .charIdx LDZ .funktalIdentifier ADD STZ      ( funktalIdentifier(charIdx) = c )
         .charIdx LDZ INC .charIdx STZ
+        ;state_end JMP2
 
 @tokeniseFunktal_NumConst          ( if (state == NumConst) )
     .prevState LDZ NumConst NEQ
@@ -268,23 +433,24 @@ JMP2r
         .state LDZ Minus EQU
         ,&prevState_Minus JCN
         ,&prevState_not_Minus JMP
-    JMP2r
+    
 
     &prevState_NumConst
         .c LDZ .constId LDZ ;numConstant ADD STA
         .constId LDZ INC .constId STZ
-    JMP2r
-
+        ;state_end JMP2
+    
     &prevState_Minus
         LIT "- ;numConstant STA
         .c LDZ #01 ;numConstant ADD STA
         #03 .constId STZ
-    JMP2r
-
+        ;state_end JMP2
+    
     &prevState_not_Minus
         .c LDZ ;numConstant STA
         #02 .constId STZ
-    JMP2r
+        ;state_end JMP2
+    
 
 @tokeniseFunktal_StringConst          ( if (state == StringConst) )
     .prevState LDZ StringConst NEQ
@@ -294,16 +460,19 @@ JMP2r
     &prevState_not_StringConst
         ;stringConstant_achar0 JSR2   ( stringConstant = achar(0) )
         #01 .constId STZ
-    JMP2r
+        ;state_end JMP2
+    
 
     &prevState_StringConst
         .c LDZ .constId LDZ ;stringConstant ADD STA
         .constId LDZ INC .constId STZ
-    JMP2r
+        ;state_end JMP2
+    
 
 @funktalTokens $800
 @tokeniseFunktal_EndStringConst          ( if (state == EndStringConst) )
     ( call addStringConstIfNew(stringConstant,constId,funktalStringConstsIdx,funktalStringConstId, idId) )
+    ;addStringConstIfNew JSR2  ( not completed )
     CString #40 SFT ( ishft(CString,4) )
     ConstantLabel ADD .taggedConstId STZ2
     .taggedConstId LDZ2 .label STZ2
@@ -311,23 +480,109 @@ JMP2r
     ;token LDA2 .funktalToken STZ2
     .funktalToken LDZ2 .funktalTokensIdx LDZ2 ;funktalTokens ADD2 STA2
     .funktalTokensIdx LDZ2 INC2 .funktalTokensIdx STZ2
+    ;state_end JMP2
 JMP2r
 
 @token $2
 @makeFunktalToken
-    .label LDZ2 #a0 SFT
-    .idId LDZ2 #03ff AND
+    .label LDZ2 #a0 SFT2
+    .idId LDZ2 #03ff AND2
     ADD2 ;token STA2
 JMP2r
+@prevState_Minus
+    .prevc LDZ .c STZ
+    ;encodeOperatorToken JSR2
+    .funktalToken LDZ2 ;funktalTokens .funktalTokensIdx LDZ2 ADD2 LDA2 ( funktalTokens(funktalTokensIdx)=funktalToken )
+    .funktalTokensIdx LDZ2 INC2 .funktalTokensIdx STZ2
+    ;state_end JMP2
 
 @encodeOperatorToken
     .c LDZ LIT "+ EQU
+    ;OperatorLabel_1 JCN2
+    .c LDZ LIT "- EQU
+    ;OperatorLabel_2 JCN2
+    .c LDZ LIT "* EQU
+    ;OperatorLabel_3 JCN2
+    .c LDZ LIT "/ EQU
+    ;OperatorLabel_4 JCN2
+    .c LDZ LIT "> EQU
+    ;OperatorLabel_5 JCN2
+    .c LDZ LIT "< EQU
+    ;OperatorLabel_6 JCN2
+    .c LDZ LIT "& EQU
+    ;OperatorLabel_7 JCN2
+    .c LDZ LIT "| EQU
+    ;OperatorLabel_8 JCN2
+    .c LDZ LIT "^ EQU
+    ;OperatorLabel_9 JCN2
+    .c LDZ LIT "! EQU
+    ;OperatorLabel_16 JCN2
+
+JMP2r   
+
+@OperatorLabel_1
+    OperatorLabel .label STZ2 #0001 .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+@OperatorLabel_2
+    OperatorLabel .label STZ2 #0002 .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+@OperatorLabel_3
+    OperatorLabel .label STZ2 #0003 .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+@OperatorLabel_4
+    OperatorLabel .label STZ2 #0004 .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+@OperatorLabel_5
+    OperatorLabel .label STZ2 #0005 .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+@OperatorLabel_6
+    OperatorLabel .label STZ2 #0006 .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+@OperatorLabel_7
+    OperatorLabel .label STZ2 #0007 .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+@OperatorLabel_8
+    OperatorLabel .label STZ2 #0008 .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+@OperatorLabel_9
+    OperatorLabel .label STZ2 #0009 .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+@OperatorLabel_16
+    OperatorLabel .label STZ2 #0010 .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+
+@tokeniseFunktal_Operator_or_LeftPointy
+    ;encodeOperatorToken JSR2
+    .funktalToken LDZ2 ;funktalTokens .funktalTokensIdx LDZ2 ADD2 LDA2 ( funktalTokens(funktalTokensIdx)=funktalToken )
+    .funktalTokensIdx LDZ2 INC2 .funktalTokensIdx STZ2
+    ;state_end JMP2
+@state_end
+
 
 
 @identifierType $1 @tidentifierStringIdx $2 @tidentifierStringId 2
 @idIdx $1 @j $1 @k $1 @cc $1 @ccc $1 @newStringConst $1 
-@funktalTypeIdentifierStringIdxs $100 @funktalTypeIdentifierStringLengths $100 @funktalTypeIdentifierStrings $800
-@funktalIdentifierStringLengths $300 @funktalIdentifierStrings $800
+
 @addIdentifierIfNew 
     #01 ;j STA 
     #01 ;k STA
@@ -449,9 +704,14 @@ JMP2r
     ;funktalIdentifierStringLengths .idId LDA ADD STA
 JMP2r
 
+
+@addStringConstIfNew
+
+JMP2r
 @updateContext
     .context LDZ None EQU
     ,&context_None JCN
+    ;
 JMP2r  
 
     &context_None
@@ -497,43 +757,47 @@ JMP2r
     
     &state_BlockClose
         None .context STZ
-
+        ;case_end JMP2
     &Libraries
         Libraries .context STZ
-    JMP2r
+        ;case_end JMP2
 
     &Uxntal
         Uxntal .context STZ
-    JMP2r
-
+        ;case_end JMP2
+    
     &Types
         Types .context STZ
-    JMP2r
+        ;case_end JMP2
 
     &Aliases
         Aliases .context STZ
-    JMP2r
+        ;case_end JMP2
 
     &Constants
         Constants .context STZ
-    JMP2r
+        ;case_end JMP2
 
     &ProgramState
         ProgramState .context STZ
-    JMP2r
+        ;case_end JMP2
 
     &Devices
         Devices .context STZ
-    JMP2r
+        ;case_end JMP2
 
     &Functions
         Functions .context STZ
-    JMP2r
+        ;case_end JMP2
 
     &Main
         Main .context STZ
-    JMP2r
-
+        ;case_end JMP2
+    
+@case_end
+    .context LDZ .prevContext STZ
+    ;funktalIdentifier_achar0 JSR2 ( funktalIdentifier=achar(0) )
+JMP2r
 @updateState
     .c STZ ( take char from the stack and put it in c )
     .state LDZ StringConst EQU 
@@ -647,7 +911,7 @@ JMP2r
         .c LDZ LIT "` EQU 
         ;Quote JCN2
 
-         
+        
         ;isIdentifierState JSR2
         ;isEndConstState JSR2
         ORA
@@ -662,8 +926,6 @@ JMP2r
         AND
         ;Separator JCN2
         
-
-
         .c LDZ LIT ", EQU 
         ;Comma JCN2
         
