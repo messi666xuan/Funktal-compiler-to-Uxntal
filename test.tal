@@ -135,6 +135,7 @@ JMP2r
     ORA ( ic == 94 .or. ic == 124 .or. ic == 126 )
     ORA ORA
 JMP2r
+
 @isSeparator
     .state LDZ ParenOpen EQU .state LDZ ParenClose EQU ORA .state LDZ BlockOpen EQU .state LDZ BlockClose EQU ORA ORA
     .state LDZ BracketOpen EQU .state LDZ BracketClose EQU ORA .state LDZ BindOpen EQU .state LDZ BindClose EQU ORA ORA
@@ -145,6 +146,28 @@ JMP2r
     ORA
     .res STZ
 JMP2r
+
+@afterIdentifier
+    .state LDZ Separator EQU .state LDZ TypeDeclarator EQU ORA .state LDZ Assignment EQU .state LDZ TypeSeparator EQU ORA ORA
+    .state LDZ AltSeparator EQU .state LDZ ParenClose EQU ORA .state LDZ ExprSeparator EQU .state LDZ LeftPointy EQU ORA ORA
+    ORA
+    .state LDZ Operator EQU .state LDZ BracketClose EQU ORA .state LDZ BindClose EQU .state LDZ Comma EQU ORA ORA
+    ORA
+    ;isIdentifierprevState JSR2
+    AND
+JMP2r
+
+@isIdentifierprevState
+    .prevState LDZ Identifier EQU
+    .prevState LDZ TypeIdentifier EQU
+    ORA
+    .prevState LDZ NumConst EQU
+    .prevState LDZ Operator EQU
+    ORA ORA
+    .prevState LDZ Operator2 EQU
+    ORA
+JMP2r
+
 @isExprSeparator
     .c LDZ #0a EQU
     .c LDZ LIT "; EQU
@@ -371,8 +394,14 @@ JMP2r
     .prevState LDZ Minus EQU AND   ( isSeparator(state) .and. prevState == Minus )
     ;prevState_Minus JCN2
     .state LDZ Operator EQU
-    .state LDZ LeftPointy EQU
+    .state LDZ LeftPointy EQU ORA
     ;tokeniseFunktal_Operator_or_LeftPointy JCN2
+    .prevState LDZ Operator EQU .prevState LDZ LeftPointy EQU ORA
+    .prevState LDZ Assignment EQU .prevState LDZ Minus EQU ORA
+    ORA
+    .state LDZ Operator2 EQU
+    AND
+    ;tokeniseFunktal_Operator2_and_prevState JCN2
 
 @tokeniseFunktal_Identifier ( if (state == Identifier) )
     .prevState LDZ Identifier NEQ
@@ -576,6 +605,93 @@ JMP2r
     .funktalToken LDZ2 ;funktalTokens .funktalTokensIdx LDZ2 ADD2 LDA2 ( funktalTokens(funktalTokensIdx)=funktalToken )
     .funktalTokensIdx LDZ2 INC2 .funktalTokensIdx STZ2
     ;state_end JMP2
+
+
+@tokeniseFunktal_Operator2_and_prevState
+    LIT "  .prevc LDZ EQU
+    ,&prevc_space JCN
+    LIT "  .c LDZ EQU
+    ,&c_space JCN
+    ,&Operator2_and_prevState_else JMP
+
+
+    &prevc_space
+        .prevc LDZ .c STZ
+        ;encodeOperatorToken JSR2
+        ;Operator2_and_prevState_end JMP2
+
+    &c_space
+        ;encodeOperatorToken JSR2
+        .funktalTokensIdx LDZ2 INC2 .funktalTokensIdx STZ2
+        ;Operator2_and_prevState_end JMP2
+
+    &Operator2_and_prevState_else
+        ;encodeOperator2Token JSR2
+        ;Operator2_and_prevState_end JMP2
+
+@Operator2_and_prevState_end
+    .funktalToken LDZ2 ;funktalTokens .funktalTokensIdx LDZ2 #0001 SUB2 ADD2 LDA2
+    ;state_end JMP2
+
+@encodeOperator2Token
+    .prevc LDZ LIT "= EQU .c LDZ LIT "= EQU AND
+    ;OperatorLabel_10 JCN2
+    .prevc LDZ LIT "/ EQU .c LDZ LIT "= EQU AND
+    ;OperatorLabel_11 JCN2
+    .prevc LDZ LIT "> EQU .c LDZ LIT "= EQU AND
+    ;OperatorLabel_12 JCN2
+    .prevc LDZ LIT "< EQU .c LDZ LIT "= EQU AND
+    ;OperatorLabel_13 JCN2
+    .prevc LDZ LIT "< EQU .c LDZ LIT "< EQU AND
+    ;OperatorLabel_15 JCN2
+    .prevc LDZ LIT "> EQU .c LDZ LIT "> EQU AND
+    ;OperatorLabel_14 JCN2
+    .prevc LDZ LIT "! EQU .c LDZ LIT "! EQU AND
+    ;OperatorLabel_17 JCN2
+    .prevc LDZ LIT "= EQU .c LDZ LIT "= EQU AND
+
+JMP2r
+@OperatorLabel_10
+    OperatorLabel .label STZ2 #000a .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+
+@OperatorLabel_11
+    OperatorLabel .label STZ2 #000b .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+
+@OperatorLabel_12
+    OperatorLabel .label STZ2 #000c .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+
+@OperatorLabel_13
+    OperatorLabel .label STZ2 #000d .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+
+@OperatorLabel_14
+    OperatorLabel .label STZ2 #000e .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+
+@OperatorLabel_15
+    OperatorLabel .label STZ2 #000f .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
+
+@OperatorLabel_17
+    OperatorLabel .label STZ2 #0011 .idId STZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2 .funktalToken LDZ2
+JMP2r
 @state_end
 
 
@@ -1111,6 +1227,11 @@ JMP2r
 @isIdentifierState
     .state LDZ Identifier EQU
     .state LDZ TypeIdentifier EQU
+    ORA
+    .state LDZ NumConst EQU
+    .state LDZ Operator EQU
+    ORA ORA
+    .state LDZ Operator2 EQU
     ORA
 JMP2r
 
