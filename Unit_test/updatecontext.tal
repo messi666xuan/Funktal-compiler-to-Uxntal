@@ -1,0 +1,210 @@
+%Base { #00 }
+%Identifier { #05 }
+%TypeIdentifier { #06 }
+%Constant { #07 }
+%TypeSeparator { #08 }
+%Assignment { #09 }
+%Operator { #0a }
+%ParenOpen { #0b }
+%ParenClose { #0c }
+%BindOpen { #0d }
+%BindClose { #0e }
+%AltSeparator { #0f }
+%NumConst { #10 }
+%CharConst { #11 }
+%EndCharConst { #12 }
+%StringConst { #13 }
+%EndStringConst { #14 }
+%Separator { #15 }
+%TypeDeclarator { #16 }
+%BlockOpen { #17 }
+%BlockClose { #18 }
+%TypeParenOpen { #19 }
+%TypeParenClose { #1a }
+%BracketOpen { #1a }
+%BracketClose { #1b }
+%Minus { #1c }
+%Operator2 { #1d }
+%Error { #1e }
+%Skip { #1f }
+%Comment { #20 }
+%ExprSeparator { #21 }
+%Comma { #22 }
+%Quote { #23 }
+%LeftPointy { #24 }
+
+( context )
+%None { #00 }
+%Libraries { #01 }
+%Uxntal { #02 }
+%Aliases { #03 }
+%Types { #04 }
+%Constants { #05 }
+%ProgramState { #06 }
+%Devices { #07 }
+%Functions { #08 }
+%Main { #09 }
+
+( token labels )
+%ContextLabel { #0001 }
+%IdentifierLabel { #0002 }
+%TypeIdentifierLabel { #0003 }
+%EmbeddedConstantLabel { #0004 }
+%ConstantLabel { #0005 }
+%SeparatorLabel { #0006 }
+%OperatorLabel { #0007 }
+%TypeSynonymLabel { #0008 }
+%ArgLabel { #0009 }
+%FNameLabel { #000a }
+%PatternLabel { #000b }
+%EndBindLabel { #000c }
+%NamedConstantLabel { #000d }
+%StateVarLabel { #000e }
+%DeviceLabel { #000f }
+
+( Const labels ( 2 bits ) )
+%CString { #01 }
+
+|0000
+|10 @Console &vector $2 &read $1 &pad $5 &write $1 &error $1
+@state $1 @c $1 @prevc $1 
+@nextState $1 @prevState $1
+@context $1 @prevContext $1 @funktalToken $2 
+@idId $2 @stringConstIdx $1 @numConstIdx $1 @charIdx $1
+@constId $1 @taggedConstId $2 @numConstId $1 @inBlock $1
+@strLen $1  
+@hasMain $1
+@funktalIdentifierStringsIdx $1  
+@index $1 @label $2 @funktalTokensIdx $2
+@res $1
+
+|0100
+None .context STZ
+BlockOpen .state STZ
+;updateContext JSR2
+( this is the main program. Here is where you call the function )
+BRK
+
+
+@funktalIdentifier "uxntal
+
+@funktalFunctionIdentifiers $1 @funktalFunctionTypes $1
+@funktalFunctionDefinitionIdxs $1 @funktalFunctionDefinitionLengths $1 
+@funktalFunctionDefinitionsIdx $1 @funktalFunctionIdentifiersIdx $1 @funktalFunctionId $1
+
+@numConstant $8 @stringConstant $80 
+
+
+( @funktalIdentifier_achar0
+    #00 .index STZ
+    #10 ( counter=16 )
+    #00 .funktalIdentifier STA ( Set current byte to 0 )
+    &loop
+        #01 SUB  ( Decrement loop counter )
+        .index LDZ INC .index STZ
+        #00 .index LDZ .funktalIdentifier ADD2 STA  ( Move to next byte in the array )
+        
+        DUP
+        #00 NEQ ,&loop JCN ( If loop counter is not zero, jump back to &loop ) )
+
+JMP2r  ( Return to the main program )
+
+@funktalTokens $800
+
+@updateContext
+    .context LDZ None EQU
+    ,&context_None JCN
+    
+JMP2r  
+
+    &context_None
+        .state LDZ BlockOpen EQU
+        ,&state_BlockOpen JCN
+
+        .state LDZ BlockClose EQU
+        ,&state_BlockClose JCN
+    JMP2r
+
+    &state_BlockOpen
+        ( ;print_1 JSR2 )
+        ;funktalIdentifier #00 ADD LDA
+        LIT "l EQU
+        ,&Libraries JCN
+        ;funktalIdentifier #00 ADD LDA
+        LIT "u EQU
+        ,&Uxntal JCN
+        ;funktalIdentifier #00 ADD LDA
+        LIT "t EQU
+        ,&Types JCN
+        ;funktalIdentifier #00 ADD LDA
+        LIT "a EQU
+        ,&Aliases JCN
+        ;funktalIdentifier #00 ADD LDA
+        LIT "c EQU
+        ,&Constants JCN
+        ;funktalIdentifier #00 ADD LDA
+        LIT "s EQU
+        ,&ProgramState JCN
+        ;funktalIdentifier #00 ADD LDA
+        LIT "d EQU
+        ,&Devices JCN
+        ;funktalIdentifier #00 ADD LDA
+        LIT "f EQU
+        ,&Functions JCN
+        ;funktalIdentifier #00 ADD LDA
+        LIT "m EQU
+        ,&Main JCN
+
+    JMP2r
+    
+    &state_BlockClose
+        None .context STZ
+        ;case_end JMP2
+    &Libraries
+        Libraries .context STZ
+        ;case_end JMP2
+
+    &Uxntal
+        Uxntal .context STZ
+        ;print_1 JSR2
+        ;case_end JMP2
+    
+    &Types
+        Types .context STZ
+        ;case_end JMP2
+
+    &Aliases
+        Aliases .context STZ
+        ;case_end JMP2
+
+    &Constants
+        Constants .context STZ
+        ;case_end JMP2
+
+    &ProgramState
+        ProgramState .context STZ
+        ;case_end JMP2
+
+    &Devices
+        Devices .context STZ
+        ;case_end JMP2
+
+    &Functions
+        Functions .context STZ
+        ;case_end JMP2
+
+    &Main
+        Main .context STZ
+        ;case_end JMP2
+    
+@case_end
+    .context LDZ .prevContext STZ
+    (;funktalIdentifier_achar0 JSR2 ( funktalIdentifier=achar(0) ) )
+JMP2r
+
+@print_1
+    #31 #18 DEO
+JMP2r
+
+
+
