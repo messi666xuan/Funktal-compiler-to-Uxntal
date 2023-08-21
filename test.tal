@@ -84,7 +84,7 @@ elseif (state == Operator2 .and. (prevState == Operator .or. prevState == LeftPo
 @idId $2 @stringConstIdx $1 @numConstIdx $1 @charIdx $1
 @constId $1 @taggedConstId $2 @numConstId $1 @inBlock $1
 @strLen $1 @funktalIdentifier $10 @hasMain $1
-@funktalIdentifierStringsIdx $1  
+  
 @index $1 @label $2 @funktalTokensIdx $2
 @res $1
 
@@ -199,7 +199,7 @@ JMP2r
     #01 ;funktalIdentifierStringsIdx STA
 JMP2r
 
-@funktalFunctionIdentifiers $200 @funktalFunctionIdentifiersIdx $2
+@funktalFunctionIdentifiers $200 @funktalFunctionIdentifiersIdx $1
 
 @addStringToFunktalFunctionIdentifierStrings
     ;addStringToFunktalIdentifierStrings JSR2
@@ -259,9 +259,9 @@ JMP2r
     call addStringToFunktalFunctionIdentifierStrings("done") ! 13 )
 JMP2r
 
-@funktalFunctionIdentifiers $1 @funktalFunctionTypes $1
+@funktalFunctionTypes $1
 @funktalFunctionDefinitionIdxs $1 @funktalFunctionDefinitionLengths $1 
-@funktalFunctionDefinitionsIdx $1 @funktalFunctionIdentifiersIdx $1 @funktalFunctionId $1
+@funktalFunctionDefinitionsIdx $1 @funktalFunctionId $1
 @clearFunktalFunctionIdentifiers
     #00 ;funktalFunctionIdentifiers STA
     #00 ;funktalFunctionTypes STA
@@ -299,13 +299,13 @@ JMP2r
 
 
 @funktalIdentifier_achar0
-    #00 .Index STZ
+    #00 .index STZ
     #10 ( counter=16 )
     #00 .funktalIdentifier STZ ( Set current byte to 0 )
     &loop
         #01 SUB  ( Decrement loop counter )
-        .Index LDZ INC .Index STZ
-        #00 .Index LDZ .funktalIdentifier ADD2 STZ  ( Move to next byte in the array )
+        .index LDZ INC .index STZ
+        #00 .index LDZ .funktalIdentifier ADD2 STZ  ( Move to next byte in the array )
         
         DUP
         #00 NEQ ,&loop JCN ( If loop counter is not zero, jump back to &loop )
@@ -313,13 +313,13 @@ JMP2r
 JMP2r  ( Return to the main program )
 
 @numConstant_achar0
-    #00 .Index STZ
+    #00 .index STZ
     #08 ( counter=8 )
     #00 ;numConstant STA ( Set current byte to 0 )
     &loop
         #01 SUB  ( Decrement loop counter )
-        .Index LDZ INC .Index STZ
-        #00 .Index LDZ ;numConstant ADD2 STA  ( Move to next byte in the array )
+        .index LDZ INC .index STZ
+        #00 .index LDZ ;numConstant ADD2 STA  ( Move to next byte in the array )
         
         DUP
         #00 NEQ ,&loop JCN ( If loop counter is not zero, jump back to &loop )
@@ -327,13 +327,13 @@ JMP2r  ( Return to the main program )
 JMP2r  ( Return to the main program )
 
 @stringConstant_achar0
-    #00 .Index STZ
+    #00 .index STZ
     #80 ( counter=128 )
     #00 ;stringConstant STA ( Set current byte to 0 )
     &loop
         #01 SUB  ( Decrement loop counter )
-        .Index LDZ INC .Index STZ
-        #00 .Index LDZ ;stringConstant ADD2 STA  ( Move to next byte in the array )
+        .index LDZ INC .index STZ
+        #00 .index LDZ ;stringConstant ADD2 STA  ( Move to next byte in the array )
         
         DUP
         #00 NEQ ,&loop JCN ( If loop counter is not zero, jump back to &loop )
@@ -996,7 +996,7 @@ JMP2r
         .state LDZ Comment EQU
         .c LDZ #0a EQU
         AND
-        ;Base JCN2
+        ,&Base JCN
         
 
         .c LDZ LIT "{ EQU 
@@ -1090,7 +1090,7 @@ JMP2r
         ;isIdentifierState JSR2
         ;isStringConstState JSR2
         ORA EOR
-        ;isdigit JSR2
+        ;isDigit JSR2
         AND
         ;NumConst JCN2
         
@@ -1212,16 +1212,16 @@ JMP2r
     ORA
     .state LDZ Assignment EQU
     ORA
-    ,&Operator2 JCN
-    ,&Assignment JMP
+    ;Operator2 JCN2
+    ;Assignment JMP2
 JMP2r
 
 @TypeSeparator_Operator2
     .state LDZ LeftPointy EQU
     .c LDZ LIT "- EQU
     AND
-    ,&TypeSeparator JCN
-    ,&Operator2 JMP
+    ;TypeSeparator JCN2
+    ;Operator2 JMP2
 JMP2r
 
 @isIdentifierState
