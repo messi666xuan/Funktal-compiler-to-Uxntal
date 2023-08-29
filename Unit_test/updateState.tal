@@ -1,0 +1,555 @@
+( state constants )
+%Base { #00 }
+%Identifier { #05 }
+%TypeIdentifier { #06 }
+%Constant { #07 }
+%TypeSeparator { #08 }
+%Assignment { #09 }
+%Operator { #0a }
+%ParenOpen { #0b }
+%ParenClose { #0c }
+%BindOpen { #0d }
+%BindClose { #0e }
+%AltSeparator { #0f }
+%NumConst { #10 }
+%CharConst { #11 }
+%EndCharConst { #12 }
+%StringConst { #13 }
+%EndStringConst { #14 }
+%Separator { #15 }
+%TypeDeclarator { #16 }
+%BlockOpen { #17 }
+%BlockClose { #18 }
+%TypeParenOpen { #19 }
+%TypeParenClose { #1a }
+%BracketOpen { #1a }
+%BracketClose { #1b }
+%Minus { #1c }
+%Operator2 { #1d }
+%Error { #1e }
+%Skip { #1f }
+%Comment { #20 }
+%ExprSeparator { #21 }
+%Comma { #22 }
+%Quote { #23 }
+%LeftPointy { #24 }
+
+( context )
+%None { #00 }
+%Libraries { #01 }
+%Uxntal { #02 }
+%Aliases { #03 }
+%Types { #04 }
+%Constants { #05 }
+%ProgramState { #06 }
+%Devices { #07 }
+%Functions { #08 }
+%Main { #09 }
+
+( token labels )
+%ContextLabel { #0001 }
+%IdentifierLabel { #0002 }
+%TypeIdentifierLabel { #0003 }
+%EmbeddedConstantLabel { #0004 }
+%ConstantLabel { #0005 }
+%SeparatorLabel { #0006 }
+%OperatorLabel { #0007 }
+%TypeSynonymLabel { #0008 }
+%ArgLabel { #0009 }
+%FNameLabel { #000a }
+%PatternLabel { #000b }
+%EndBindLabel { #000c }
+%NamedConstantLabel { #000d }
+%StateVarLabel { #000e }
+%DeviceLabel { #000f }
+
+( Const labels ( 2 bits ) )
+%CString { #01 }
+
+|0000
+|10 @Console &vector $2 &read $1 &pad $5 &write $1 &error $1
+@state $1 @c $1 
+@nextState $1 
+
+
+|0100
+LIT "( .c STZ
+Minus .state STZ
+;updateState JSR2
+( this is the main program. Here is where you call the function )
+BRK
+@print_ParenOpen
+    #50 #18 DEO
+    #61 #18 DEO
+    #72 #18 DEO
+    #65 #18 DEO
+    #6e #18 DEO
+    #4f #18 DEO
+    #70 #18 DEO
+    #65 #18 DEO
+    #6e #18 DEO
+JMP2r
+
+@isTypeIdentifierStartChar
+    .c LDZ #40 GTH
+    .c LDZ #5b LTH
+    AND
+JMP2r
+
+@isIdentifierStartChar
+    .c LDZ #60 GTH
+    .c LDZ #7b LTH
+    AND
+    .c LDZ #5f EQU
+    ORA
+JMP2r
+
+@isDigit
+    .c LDZ #2f GTH
+    .c LDZ #3a LTH
+    AND
+JMP2r
+
+@isOperator
+    .c LDZ #29 GTH
+    .c LDZ #30 LTH
+    AND
+    .c LDZ #21 EQU
+    .c LDZ #25 EQU
+    ORA ORA         ( (ic >= 42 .and. ic <= 47) .or. ic == 33 .or. ic == 37 )
+    .c LDZ #26 EQU
+    .c LDZ #3c EQU
+    ORA
+    .c LDZ #3d EQU
+    .c LDZ #3e EQU
+    ORA ORA         ( ic == 38 .or. ic == 60 .or. ic == 61 .or. ic == 62 )
+    .c LDZ #5e EQU
+    .c LDZ #7c EQU
+    ORA
+    .c LDZ #7e EQU
+    ORA ( ic == 94 .or. ic == 124 .or. ic == 126 )
+    ORA ORA
+JMP2r
+
+@isExprSeparator
+    .c LDZ #0a EQU
+    .c LDZ LIT "; EQU
+    ORA
+JMP2r
+
+@updateState
+    ( .c STZ ( take char from the stack and put it in c ) )
+    .state LDZ StringConst EQU 
+    .c LDZ #22 EQU ( " has an ASCII code value of 34 )
+    AND
+    ,&EndString JCN
+
+    .state LDZ StringConst EQU
+    .c LDZ #22 NEQ
+    AND
+    ,&String JCN
+    
+
+    
+    .state LDZ CharConst EQU 
+    .c LDZ #27 EQU ( " has an ASCII code value of 34 )
+    AND
+    ,&EndChar JCN
+
+    .state LDZ CharConst EQU
+    .c LDZ #27 NEQ
+    AND
+    ,&Char JCN
+    
+
+    .state LDZ Comment EQU
+    .c LDZ #0a EQU
+    AND
+    ,&Base JCN
+    
+
+    .state LDZ StringConst NEQ
+    .state LDZ CharConst NEQ
+    AND
+    .state LDZ Comment NEQ
+    AND
+    ,&second_jump JCN ( state /= StringConst .and. state /= CharConst .and. state /= Comment )
+
+    ,&nextState_state JMP ( else nextState = state )
+    JMP2r
+
+    &nextState_state
+        .state LDZ .nextState STZ
+    JMP2r
+
+    &EndString
+        EndStringConst .nextState STZ
+    JMP2r
+
+    &String
+        StringConst .nextState STZ
+    JMP2r
+
+    &EndChar
+        EndCharConst .nextState STZ
+    JMP2r
+
+    &Char
+        CharConst .nextState STZ
+    JMP2r
+
+    &Base
+        Base .nextState STZ
+    JMP2r
+
+    &second_jump
+        .c LDZ #22 EQU ( " has an ASCII code value of 34 )
+        ,&String JCN
+        
+        .c LDZ #27 EQU
+        ,&Char JCN
+        
+
+        .state LDZ Minus EQU
+        .c LDZ LIT "- EQU
+        AND
+        ;Comment JCN2
+        
+
+        .state LDZ Comment EQU
+        .c LDZ #0a EQU
+        AND
+        ,&Base JCN
+        
+
+        .c LDZ LIT "{ EQU 
+        ;BlockOpen JCN2
+        
+        .c LDZ LIT "} EQU 
+        ;BlockClose JCN2
+        
+
+        .c LDZ LIT "( EQU 
+        ;ParenOpen JCN2
+        
+        .c LDZ LIT ") EQU 
+        ;ParenClose JCN2
+
+        .c LDZ LIT "[ EQU 
+        ;BracketOpen JCN2
+        .c LDZ LIT "] EQU 
+        ;BracketClose JCN2
+        
+        .c LDZ LIT "\ EQU 
+        ;BindOpen JCN2
+        
+        .c LDZ LIT "= EQU 
+        ;Operator2_Assignment JCN2
+        
+
+        .c LDZ LIT "` EQU 
+        ;Quote JCN2
+
+        
+        ;isIdentifierState JSR2
+        ;isEndConstState JSR2
+        ORA
+        .state LDZ BlockOpen EQU
+        .state LDZ BracketOpen EQU
+        ORA
+        .state LDZ ParenOpen EQU
+        ORA ORA
+        .c LDZ LIT "  EQU
+        .c LDZ #09 EQU
+        ORA
+        AND
+        ;Separator JCN2
+        
+        .c LDZ LIT ", EQU 
+        ;Comma JCN2
+        
+
+        .c LDZ LIT ": EQU 
+        ;TypeDeclarator JCN2
+        
+
+        .c LDZ LIT "| EQU 
+        ;AltSeparator JCN2
+        
+
+        .state LDZ NumConst NEQ
+        .c LDZ LIT ". EQU
+        AND
+        ;BindClose JCN2
+        
+
+        .state LDZ NumConst EQU
+        .c LDZ LIT "_ EQU
+        AND
+        ;NumConst JCN2
+        
+
+        ;isIdentifierState JSR2
+        EOR
+        ;isIdentifierStartChar JSR2
+        AND
+        ;Identifier JCN2
+        
+
+        ;isIdentifierState JSR2
+        EOR
+        ;isTypeIdentifierStartChar JSR2
+        AND
+        ;TypeIdentifier JCN2
+        
+
+        ;isIdentifierState JSR2
+        EOR
+        ;isStringConstState JSR2
+        ORA
+        ;TypeIdentifier JCN2
+        
+
+        ;isIdentifierState JSR2
+        ;isStringConstState JSR2
+        ORA EOR
+        ;isDigit JSR2
+        AND
+        ;NumConst JCN2
+        
+
+        .state LDZ LeftPointy EQU
+        .c LDZ LIT "- EQU
+        AND
+        ;TypeSeparator JCN2
+        
+
+        .state LDZ Minus NEQ
+        .c LDZ LIT "- EQU
+        AND
+        ;Minus JCN2
+        
+
+        .c LDZ LIT "  EQU
+        .c LDZ #09 EQU
+        ORA
+        .state LDZ Minus EQU
+        AND
+        ;Operator2 JCN2
+        
+
+        .state LDZ Operator NEQ
+        .state LDZ Operator2 NEQ
+        AND
+        .state LDZ LeftPointy NEQ
+        .c LDZ LIT "< EQU
+        AND AND
+        ;LeftPointy JCN2
+        
+
+        .state LDZ Operator NEQ
+        .state LDZ Operator2 NEQ
+        AND
+        .state LDZ LeftPointy NEQ
+        ;isOperator JSR2
+        AND AND
+        ;Operator JCN2
+        
+
+        .state LDZ Operator EQU
+        .state LDZ LeftPointy EQU
+        ORA
+        .state LDZ Assignment EQU
+        ORA
+        ;isOperator JSR2
+        AND
+        ;TypeSeparator_Operator2 JCN2
+        
+
+
+        .state LDZ Operator2 EQU
+        ;updateState/Base JCN2
+        
+
+        .state LDZ Operator EQU
+        .state LDZ LeftPointy EQU
+        ORA
+        ;isOperator JSR2
+        EOR AND
+        ;updateState/Base JCN2
+        
+
+        .state LDZ ExprSeparator NEQ
+        ;isExprSeparator JSR2
+        AND
+        ;ExprSeparator JCN2
+        
+
+        .c LDZ LIT "  EQU
+        .c LDZ #09 EQU
+        ORA
+        ;isExprSeparator JSR2
+        ORA
+        .state LDZ ExprSeparator EQU
+        AND
+        ;Separator JCN2
+        ;updateState/nextState_state JMP2 ( else nextState = state )
+        
+JMP2r
+
+@Comment
+    Comment .nextState STZ
+JMP2r
+
+@BlockOpen
+    BlockOpen .nextState STZ
+JMP2r
+
+@BlockClose
+    BlockClose .nextState STZ
+JMP2r
+
+@ParenOpen
+    ParenOpen .nextState STZ
+    ;print_ParenOpen JSR2
+JMP2r
+
+@ParenClose
+    ParenClose .nextState STZ
+JMP2r
+
+@BracketOpen
+    BracketOpen .nextState STZ
+JMP2r
+
+@BracketClose
+    BracketClose .nextState STZ
+JMP2r
+
+@BindOpen
+    BindOpen .nextState STZ
+JMP2r
+
+@Operator2_Assignment
+    .state LDZ Operator EQU
+    .state LDZ LeftPointy EQU
+    ORA
+    .state LDZ Assignment EQU
+    ORA
+    ;Operator2 JCN2
+    ;Assignment JMP2
+JMP2r
+
+@TypeSeparator_Operator2
+    .state LDZ LeftPointy EQU
+    .c LDZ LIT "- EQU
+    AND
+    ;TypeSeparator JCN2
+    ;Operator2 JMP2
+JMP2r
+
+@isIdentifierState
+    .state LDZ Identifier EQU
+    .state LDZ TypeIdentifier EQU
+    ORA
+    .state LDZ NumConst EQU
+    .state LDZ Operator EQU
+    ORA ORA
+    .state LDZ Operator2 EQU
+    ORA
+JMP2r
+
+@isEndConstState
+    .state LDZ EndCharConst EQU
+    .state LDZ EndStringConst EQU
+    ORA
+    .state LDZ NumConst EQU
+    ORA
+JMP2r
+
+@isStringConstState
+    .state LDZ CharConst EQU
+    .state LDZ CharConst EQU
+    ORA
+    
+JMP2r
+
+
+@Operator2
+    Operator2 .nextState STZ
+JMP2r
+
+@Assignment
+    Assignment .nextState STZ
+JMP2r
+
+@Quote
+    Quote .nextState STZ
+JMP2r
+
+@Comma
+    Comma .nextState STZ
+JMP2r
+
+@Separator
+    Separator .nextState STZ
+JMP2r
+
+@TypeDeclarator
+    TypeDeclarator .nextState STZ
+JMP2r
+
+@AltSeparator
+    AltSeparator .nextState STZ
+JMP2r
+
+@BindClose
+    BindClose .nextState STZ
+JMP2r
+
+@NumConst
+    NumConst .nextState STZ
+JMP2r
+
+@Identifier
+    Identifier .nextState STZ
+JMP2r
+
+@Minus
+    Minus .nextState STZ
+JMP2r
+
+@LeftPointy
+    LeftPointy .nextState STZ
+JMP2r
+
+@Operator
+    Operator .nextState STZ
+JMP2r
+
+@TypeSeparator
+    TypeSeparator .nextState STZ
+JMP2r
+
+@ExprSeparator
+    ExprSeparator .nextState STZ
+JMP2r
+
+@TypeIdentifier
+    TypeIdentifier .nextState STZ
+JMP2r
+
+
+
+
+
+
+    
+
+
+
+    
+
+
+
+
