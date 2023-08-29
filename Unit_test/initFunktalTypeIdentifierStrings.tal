@@ -50,7 +50,7 @@ JMP2r
 JMP2r
 
 @addStringToFunktalTypeIdentifierStrings
-    ( call str2array(charStr,funktalTypeIdentifierStringsIdx,funktalTypeIdentifierStrings,strLen) )
+    ( call str2array )
     ;funktalTypeIdentifierStringsIdx LDA ;funktalTypeIdentifierStringId LDA ;funktalTypeIdentifierStringIdxs ADD2 STA
     .strLen LDZ ;funktalTypeIdentifierStringId LDA ;funktalTypeIdentifierStringLengths ADD2 STA
     ;funktalTypeIdentifierStringId LDA INC ;funktalTypeIdentifierStringId STA

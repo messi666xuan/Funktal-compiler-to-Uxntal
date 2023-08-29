@@ -68,30 +68,25 @@
 
 |0000
 |10 @Console &vector $2 &read $1 &pad $5 &write $1 &error $1
-@state $1 @c $1 @prevc $1 
-@nextState $1 @prevState $1
-@context $1 @prevContext $1 @funktalToken $2 
-@idId $2 @stringConstIdx $1 @numConstIdx $1 @charIdx $1
-@constId $1 @taggedConstId $2 @numConstId $1 @inBlock $1
-@strLen $1 @funktalIdentifier $10 @hasMain $1
-  
-@index $1 @label $2 @funktalTokensIdx $2
-@res $1
+@idId $2 
+@strLen $1 
+@label $2 
+
 
 |0100
 
 ( this is the main program. Here is where you call the function )
 BRK
-@charStr $10
 
 
-@funktalIdentifierStrings $800 @funktalIdentifierStringIdxs $300 @funktalIdentifierStringLengths $300
+
+@funktalIdentifierStringIdxs $300 @funktalIdentifierStringLengths $300
 @funktalIdentifierStringId $2 @funktalIdentifierStringsIdx $2
 @funktalFunctionIdentifiers $200 @funktalFunctionIdentifiersIdx $1
 
 @addStringToFunktalFunctionIdentifierStrings
     ;addStringToFunktalIdentifierStrings JSR2
-    (funktalFunctionIdentifiers(funktalFunctionIdentifiersIdx) = makeFunktalToken(IdentifierLabel, funktalIdentifierStringId-1_2) )
+    ( funktalFunctionIdentifiers(funktalFunctionIdentifiersIdx) = makeFunktalToken(IdentifierLabel, funktalIdentifierStringId-1_2) )
     IdentifierLabel .label LDZ2 ;funktalIdentifierStringId #0001 SUB2 .idId LDZ2
     ;makeFunktalToken JSR2
     ;token LDA2
