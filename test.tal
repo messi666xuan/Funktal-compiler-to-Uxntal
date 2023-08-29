@@ -236,27 +236,7 @@ JMP2r
     ;addStringToFunktalFunctionIdentifierStrings JSR2
     ;addStringToFunktalFunctionIdentifierStrings JSR2
     ( I don't know how to pass an array as a parameter into a function in uxntal )
-(   call addStringToFunktalFunctionIdentifierStrings("main") ! 1
-    ! Type ctor alt matching
-    call addStringToFunktalFunctionIdentifierStrings("is") ! 2
-    ! Minimal array functions
-    call addStringToFunktalFunctionIdentifierStrings("at") ! 3
-    call addStringToFunktalFunctionIdentifierStrings("update") ! 4
-    call addStringToFunktalFunctionIdentifierStrings("size") ! 5
-    ! Application of quoted functions
-    call addStringToFunktalFunctionIdentifierStrings("apply") ! 6
-    ! if-then-else. This can actually be implemented in Funktal so might go in the Prelude
-    call addStringToFunktalFunctionIdentifierStrings("if") ! 7
-    ! access/update state
-    call addStringToFunktalFunctionIdentifierStrings("get") ! 8
-    call addStringToFunktalFunctionIdentifierStrings("put") ! 9
-    ! device read/write
-    call addStringToFunktalFunctionIdentifierStrings("read") ! 10
-    call addStringToFunktalFunctionIdentifierStrings("write") ! 11
-    ! print, for debugging before we have proper devices
-    call addStringToFunktalFunctionIdentifierStrings("print") ! 12
-    ! this is for event handlers. It's just BRK
-    call addStringToFunktalFunctionIdentifierStrings("done") ! 13 )
+
 JMP2r
 
 @funktalFunctionTypes $1
@@ -274,8 +254,36 @@ JMP2r
 
 @initFunktalTypeIdentifierStrings
     ;clearFunktalTypeIdentifiers JSR2
+    #01 ;funktalTypeIdentifierStringIdxs ;funktalTypeIdentifierStringId LDA ADD STA
     ;addStringToFunktalTypeIdentifierStrings JSR2
-
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
 JMP2r
 
 @funktalTypeIdentifierStringIdxs $100 @funktalTypeIdentifierStringLengths $100 @funktalTypeIdentifierStrings $800
@@ -306,10 +314,8 @@ JMP2r
         #01 SUB  ( Decrement loop counter )
         .index LDZ INC .index STZ
         #00 .index LDZ .funktalIdentifier ADD2 STZ  ( Move to next byte in the array )
-        
         DUP
         #00 NEQ ,&loop JCN ( If loop counter is not zero, jump back to &loop )
-
 JMP2r  ( Return to the main program )
 
 @numConstant_achar0
