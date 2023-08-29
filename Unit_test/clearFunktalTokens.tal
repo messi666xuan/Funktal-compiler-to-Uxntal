@@ -1,0 +1,12 @@
+|0000
+|10 @Console &vector $2 &read $1 &pad $5 &write $1 &error $1
+@funktalTokensIdx $2
+
+|0100
+;clearFunktalTokens JSR2
+BRK
+@funktalTokens $800
+@clearFunktalTokens
+    #0000 ;funktalTokens STA2
+    #0001 .funktalTokensIdx STZ2
+JMP2r

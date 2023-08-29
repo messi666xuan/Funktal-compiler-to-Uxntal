@@ -1,0 +1,51 @@
+|0000 @funktalIdentifier $10 @Index $1
+( TESTING funktalIdentifier=achar(0) )
+|0100
+#00 .Index STZ
+#10 ( counter=16 )
+;achar0 JSR2
+;print_value JSR2
+BRK         
+@achar0
+    #30 .funktalIdentifier STZ ( Set current byte to 0 )
+    &loop
+        #01 SUB  ( Decrement loop counter )
+        .Index LDZ INC .Index STZ
+        #30 .Index LDZ .funktalIdentifier ADD STZ  ( Move to next byte in the array )
+        DUP
+        #00 NEQ ,&loop JCN ( If loop counter is not zero, jump back to &loop )
+JMP2r
+    
+@print_value
+    .funktalIdentifier LDZ 
+    #18 DEO 
+    #01 .funktalIdentifier ADD LDZ
+    #18 DEO
+    #02 .funktalIdentifier ADD LDZ
+    #18 DEO
+    #03 .funktalIdentifier ADD LDZ
+    #18 DEO
+    #04 .funktalIdentifier ADD LDZ
+    #18 DEO
+    #05 .funktalIdentifier ADD LDZ
+    #18 DEO
+    #06 .funktalIdentifier ADD LDZ
+    #18 DEO
+    #07 .funktalIdentifier ADD LDZ
+    #18 DEO
+    #08 .funktalIdentifier ADD LDZ
+    #18 DEO
+    #09 .funktalIdentifier ADD LDZ
+    #18 DEO
+    #0a .funktalIdentifier ADD LDZ
+    #18 DEO
+    #0b .funktalIdentifier ADD LDZ
+    #18 DEO
+    #0c .funktalIdentifier ADD LDZ
+    #18 DEO
+    #0d .funktalIdentifier ADD LDZ
+    #18 DEO
+    #0e .funktalIdentifier ADD LDZ
+    #18 DEO
+JMP2r    
+    

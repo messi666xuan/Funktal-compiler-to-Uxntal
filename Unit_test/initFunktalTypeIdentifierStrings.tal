@@ -1,0 +1,57 @@
+|0000
+|10 @Console &vector $2 &read $1 &pad $5 &write $1 &error $1
+@strLen $1
+
+|0100
+
+BRK
+@initFunktalTypeIdentifierStrings
+    ;clearFunktalTypeIdentifiers JSR2
+    #01 ;funktalTypeIdentifierStringIdxs ;funktalTypeIdentifierStringId LDA ADD STA
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+    ;addStringToFunktalTypeIdentifierStrings JSR2
+JMP2r
+
+@funktalTypeIdentifierStringIdxs $100 @funktalTypeIdentifierStringLengths $100 @funktalTypeIdentifierStrings $800
+@funktalTypeIdentifierStringId $1 @funktalTypeIdentifierStringsIdx $1
+@clearFunktalTypeIdentifiers
+    LIT "  ;funktalTypeIdentifierStrings STA
+    #00 ;funktalTypeIdentifierStringIdxs STA
+    #00 ;funktalTypeIdentifierStringLengths STA
+    #01 ;funktalTypeIdentifierStringId STA
+    #01 ;funktalTypeIdentifierStringsIdx STA 
+JMP2r
+
+@addStringToFunktalTypeIdentifierStrings
+    ( call str2array(charStr,funktalTypeIdentifierStringsIdx,funktalTypeIdentifierStrings,strLen) )
+    ;funktalTypeIdentifierStringsIdx LDA ;funktalTypeIdentifierStringId LDA ;funktalTypeIdentifierStringIdxs ADD2 STA
+    .strLen LDZ ;funktalTypeIdentifierStringId LDA ;funktalTypeIdentifierStringLengths ADD2 STA
+    ;funktalTypeIdentifierStringId LDA INC ;funktalTypeIdentifierStringId STA
+    .strLen LDZ ;funktalTypeIdentifierStringsIdx LDA ADD2 ;funktalTypeIdentifierStringsIdx STA

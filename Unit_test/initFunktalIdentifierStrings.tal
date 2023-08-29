@@ -1,0 +1,128 @@
+( state constants )
+%Base { #00 }
+%Identifier { #05 }
+%TypeIdentifier { #06 }
+%Constant { #07 }
+%TypeSeparator { #08 }
+%Assignment { #09 }
+%Operator { #0a }
+%ParenOpen { #0b }
+%ParenClose { #0c }
+%BindOpen { #0d }
+%BindClose { #0e }
+%AltSeparator { #0f }
+%NumConst { #10 }
+%CharConst { #11 }
+%EndCharConst { #12 }
+%StringConst { #13 }
+%EndStringConst { #14 }
+%Separator { #15 }
+%TypeDeclarator { #16 }
+%BlockOpen { #17 }
+%BlockClose { #18 }
+%TypeParenOpen { #19 }
+%TypeParenClose { #1a }
+%BracketOpen { #1a }
+%BracketClose { #1b }
+%Minus { #1c }
+%Operator2 { #1d }
+%Error { #1e }
+%Skip { #1f }
+%Comment { #20 }
+%ExprSeparator { #21 }
+%Comma { #22 }
+%Quote { #23 }
+%LeftPointy { #24 }
+
+( context )
+%None { #00 }
+%Libraries { #01 }
+%Uxntal { #02 }
+%Aliases { #03 }
+%Types { #04 }
+%Constants { #05 }
+%ProgramState { #06 }
+%Devices { #07 }
+%Functions { #08 }
+%Main { #09 }
+
+( token labels )
+%ContextLabel { #0001 }
+%IdentifierLabel { #0002 }
+%TypeIdentifierLabel { #0003 }
+%EmbeddedConstantLabel { #0004 }
+%ConstantLabel { #0005 }
+%SeparatorLabel { #0006 }
+%OperatorLabel { #0007 }
+%TypeSynonymLabel { #0008 }
+%ArgLabel { #0009 }
+%FNameLabel { #000a }
+%PatternLabel { #000b }
+%EndBindLabel { #000c }
+%NamedConstantLabel { #000d }
+%StateVarLabel { #000e }
+%DeviceLabel { #000f }
+
+( Const labels ( 2 bits ) )
+%CString { #01 }
+
+|0000
+|10 @Console &vector $2 &read $1 &pad $5 &write $1 &error $1
+@state $1 @c $1 @prevc $1 
+@nextState $1 @prevState $1
+@context $1 @prevContext $1 @funktalToken $2 
+@idId $2 @stringConstIdx $1 @numConstIdx $1 @charIdx $1
+@constId $1 @taggedConstId $2 @numConstId $1 @inBlock $1
+@strLen $1 @funktalIdentifier $10 @hasMain $1
+  
+@index $1 @label $2 @funktalTokensIdx $2
+@res $1
+
+|0100
+
+( this is the main program. Here is where you call the function )
+BRK
+@charStr $10
+@initFunktalIdentifierStrings    ( call initFunktalIdentifierStrings() )
+    ;clearFunktalIdentifiers JSR2
+    #01 ;funktalIdentifierStringIdxs ;funktalIdentifierStringId LDA2 ADD2 STA2 ( funktalIdentifierStringIdxs(funktalIdentifierStringId)=1 )
+    LIT "- ;charStr STA
+    ;addStringToFunktalFunctionIdentifierStrings JSR2
+JMP2r
+
+@funktalIdentifierStrings $800 @funktalIdentifierStringIdxs $300 @funktalIdentifierStringLengths $300
+@funktalIdentifierStringId $2 @funktalIdentifierStringsIdx $2
+
+
+@clearFunktalIdentifiers
+    LIT "  ;funktalIdentifierStrings STA 
+    #00 ;funktalIdentifierStringIdxs STA
+    #00 ;funktalIdentifierStringLengths STA
+    #01 ;funktalIdentifierStringId STA
+    #01 ;funktalIdentifierStringsIdx STA
+JMP2r
+
+@funktalFunctionIdentifiers $200 @funktalFunctionIdentifiersIdx $1
+
+@addStringToFunktalFunctionIdentifierStrings
+    ;addStringToFunktalIdentifierStrings JSR2
+    IdentifierLabel .label LDZ2 ;funktalIdentifierStringId #0001 SUB2 .idId LDZ2
+    ;makeFunktalToken JSR2
+    ;token LDA2
+    ;funktalFunctionIdentifiers ;funktalFunctionIdentifiersIdx LDA2 ADD2 STA2
+    ;funktalFunctionIdentifiersIdx LDA2 INC2 ;funktalFunctionIdentifiersIdx STA2
+
+JMP2r
+@addStringToFunktalIdentifierStrings
+    ( call str2array(charStr,funktalIdentifierStringsIdx,funktalIdentifierStrings,strLen) )
+    ;funktalIdentifierStringsIdx LDA ;funktalIdentifierStringId LDA ;funktalIdentifierStringIdxs ADD2 STA
+    .strLen LDZ ;funktalIdentifierStringId LDA ;funktalIdentifierStringLengths ADD2 STA
+    ;funktalIdentifierStringId LDA INC ;funktalIdentifierStringId STA
+    .strLen LDZ ;funktalIdentifierStringsIdx LDA ADD2 ;funktalIdentifierStringsIdx STA
+JMP2r
+@token $2
+@makeFunktalToken
+    .label LDZ2 #a0 SFT2
+    .idId LDZ2 #03ff AND2
+    ADD2 ;token STA2
+JMP2r
